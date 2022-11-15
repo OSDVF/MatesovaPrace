@@ -1,0 +1,61 @@
+﻿<Page
+    x:Class="MatesovaPrace.LoginPage"
+    x:Name="LoginPageElement"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MatesovaPrace"
+    xmlns:models="using:MatesovaPrace.Models"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d skia"
+    d:DataContext="{d:DesignInstance Type=models:LoginModel, IsDesignTimeCreatable=True}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <StackPanel>
+        <CommandBar HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+            <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
+            <AppBarElementContainer>
+                <TextBlock Text="Select Google Sheet" FontSize="20" Margin="12,8"/>
+            </AppBarElementContainer>
+            
+        </CommandBar>
+
+        <ScrollViewer>
+            <StackPanel Padding="5">
+                <TextBlock Text="Find a sheet from google drive." />
+                <TextBox Text="{Binding FindString}" />
+                <Button Content="Find" Click="Search_Click"/>
+                <CheckBox Content="Include files from shared drives" IsChecked="{Binding IncludeSharedFiles}"/>
+
+                <TextBlock Text="Or enter sheet ID manually." />
+                <TextBox Text="{Binding SheetId}" />
+
+                <Button Content="Connect to sheet" Click="Manual_Click"/>
+
+                <TwoPaneView PanePriority="Pane1" TallModeConfiguration="TopBottom" WideModeConfiguration="LeftRight">
+                    <TwoPaneView.Pane1>
+                        <StackPanel>
+                            <!--Display list of searched files-->
+                            <ItemsControl ItemsSource="{Binding FoundFiles, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Name}" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Content="﹀" BorderThickness="0" Visibility="{Binding NextPageVisible, ElementName=LoginPageElement}" Click="NextPage_Click" />
+                        </StackPanel>
+                    </TwoPaneView.Pane1>
+
+                    <TwoPaneView.Pane2>
+                        <!--Information about selected file-->
+                        <StackPanel Visibility="{x:Bind SelectedFileInfoVisible}">
+                            <TextBlock Text="{Binding SelectedFile.Name}" FontSize="16" />
+                            <TextBlock Text="{Binding SelectedFile.Id}" Foreground="Gray" />
+                            <Image Source="{Binding SelectedFile.Info.IconLink}"/>
+                        </StackPanel>
+                    </TwoPaneView.Pane2>
+                </TwoPaneView>
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</Page>
