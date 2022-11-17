@@ -12,8 +12,16 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <StackPanel>
+        <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+            <AppBarElementContainer>
+                <StackPanel>
+                    <TextBlock Visibility="{x:Bind LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
+                    <TextBlock Visibility="{x:Bind AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
+                    <TextBlock Visibility="{x:Bind GridVisibility}" Text="Matesova Práce" FontSize="18" Margin="12,8" />
+                </StackPanel>
+            </AppBarElementContainer>
+        </CommandBar>
         <StackPanel Visibility="{x:Bind LoginRequestVisible}" Margin="20">
-            <TextBlock Text="Connect to Google Drive first" FontSize="30" />
             <Button Content="Log in" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
                 <StackPanel>
@@ -24,7 +32,6 @@
             </Expander>
         </StackPanel>
         <StackPanel Visibility="{x:Bind AutoAuthVisibility}" Margin="20">
-            <TextBlock Text="Google Drive access granted." FontSize="30" />
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Visibility="{x:Bind GridVisibility}">

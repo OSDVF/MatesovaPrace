@@ -14,6 +14,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI.Core;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -26,9 +27,11 @@ namespace MatesovaPrace
     public sealed partial class MainPage : Page
     {
         AccommodationPageModel model = new();
+        private App? app;
+
         public Visibility LoginRequestVisible => model.Connection == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
         public bool HideUnlogged { get; set; } = false;
-        string ManualAuthCode { get; set; }
+        string? ManualAuthCode { get; set; }
         bool FoundAuthCode { get; set; } = false;
 
         public Visibility AutoAuthVisibility => FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
@@ -39,6 +42,22 @@ namespace MatesovaPrace
             InitializeComponent();
             NavigationCacheMode = NavigationCacheMode.Enabled;
             DataContext = model;
+
+#if WINDOWS
+            app = (Application.Current as App);
+            app?.MainWindow.SetTitleBar(MainAppBar);
+            SizeChanged += ResetTitlebar;
+#endif
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            SizeChanged -= ResetTitlebar;
+        }
+
+        void ResetTitlebar(object sender, SizeChangedEventArgs e)
+        {
+            app?.MainWindow.SetTitleBar(MainAppBar);
         }
 
         void Load(object sender, RoutedEventArgs e)

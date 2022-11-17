@@ -45,6 +45,8 @@ namespace MatesovaPrace
         UserCredential? credential;
         private DriveService? drive;
         private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
+        private App? app;
+
         internal Action<ConnectionModel>? OnConnected { get; set; }
 
         public Visibility SelectedFileInfoVisible => _data.SelectedFile == null ? Visibility.Collapsed : Visibility.Visible;
@@ -54,9 +56,25 @@ namespace MatesovaPrace
             InitializeComponent();
             DataContext = _data;
 #if WINDOWS
-            var app = (Application.Current as App);
-            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[1]).Content);
+            app = (Application.Current as App);
+            SetTitleBar();
+            SizeChanged += ResetTitlebar;
 #endif
+        }
+
+        private void SetTitleBar()
+        {
+            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[1]).Content);
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            SizeChanged -= ResetTitlebar;
+        }
+
+        void ResetTitlebar(object sender, SizeChangedEventArgs e)
+        {
+            SetTitleBar();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)

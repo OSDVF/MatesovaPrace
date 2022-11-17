@@ -14,7 +14,7 @@
         <CommandBar x:Name="AppBar"  HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
             <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
             <AppBarElementContainer>
-                <TextBlock Text="Select Google Sheet" FontSize="20" Margin="12,8"/>
+                <TextBlock Text="Select Google Sheet" FontSize="18" Margin="12,8"/>
             </AppBarElementContainer>
         </CommandBar>
 
