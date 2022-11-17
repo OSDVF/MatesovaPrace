@@ -8,14 +8,26 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance Type=models:AccommodationPageModel, IsDesignTimeCreatable=True}"
+    Loaded="Load"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <StackPanel>
         <StackPanel Visibility="{x:Bind LoginRequestVisible}" Margin="20">
             <TextBlock Text="Connect to Google Drive first" FontSize="30" />
             <Button Content="Log in" Click="ShowLoginPage_Click"/>
+            <Expander Header="More options" IsExpanded="False">
+                <StackPanel>
+                    <TextBlock Text="Enter authentication code manually" />
+                    <TextBox Text="{x:Bind ManualAuthCode}"/>
+                    <Button Content="Authenticate" Click="ManualAuth_Click"/>
+                </StackPanel>
+            </Expander>
         </StackPanel>
-        <StackPanel Orientation="Horizontal">
+        <StackPanel Visibility="{x:Bind AutoAuthVisibility}" Margin="20">
+            <TextBlock Text="Google Drive access granted." FontSize="30" />
+            <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Visibility="{x:Bind GridVisibility}">
             <CheckBox Content="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
         </StackPanel>
         <!--Grid of accommodated people-->
@@ -28,7 +40,7 @@
                                 <Setter Property="X1" Value="0" />
                                 <Setter Property="X2" Value="0" />
                                 <Setter Property="Y1" Value="0" />
-                                
+
                                 <Setter Property="Stroke" Value="Gray" />
                             </Style>
                         </StackPanel.Resources>

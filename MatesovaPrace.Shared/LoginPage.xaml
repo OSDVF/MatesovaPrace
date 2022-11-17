@@ -7,16 +7,15 @@
     xmlns:models="using:MatesovaPrace.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d skia"
+    mc:Ignorable="d"
     d:DataContext="{d:DesignInstance Type=models:LoginModel, IsDesignTimeCreatable=True}"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <StackPanel>
-        <CommandBar HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+        <CommandBar x:Name="AppBar"  HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
             <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
             <AppBarElementContainer>
                 <TextBlock Text="Select Google Sheet" FontSize="20" Margin="12,8"/>
             </AppBarElementContainer>
-            
         </CommandBar>
 
         <ScrollViewer>

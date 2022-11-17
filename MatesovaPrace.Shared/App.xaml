@@ -11,6 +11,7 @@
                 <!-- Add resource dictionaries here -->                
             </ResourceDictionary.MergedDictionaries>
             <!-- Add resources here -->
+            <SolidColorBrush x:Key="WindowCaptionBackground">Transparent</SolidColorBrush>
         </ResourceDictionary>
     </Application.Resources>
 

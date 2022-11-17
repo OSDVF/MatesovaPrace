@@ -7,13 +7,18 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MatesovaPrace.Shared", "Mat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platforms", "Platforms", "{2CC79433-336B-48C9-85A3-6271996861F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatesovaPrace.Wasm", "MatesovaPrace.Wasm\MatesovaPrace.Wasm.csproj", "{BBFF169B-969D-45D2-83BE-B5467E767AB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MatesovaPrace.Wasm", "MatesovaPrace.Wasm\MatesovaPrace.Wasm.csproj", "{BBFF169B-969D-45D2-83BE-B5467E767AB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatesovaPrace.Mobile", "MatesovaPrace.Mobile\MatesovaPrace.Mobile.csproj", "{EDCCD54A-CF32-4499-9FBB-34DB27C3E7D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MatesovaPrace.Mobile", "MatesovaPrace.Mobile\MatesovaPrace.Mobile.csproj", "{EDCCD54A-CF32-4499-9FBB-34DB27C3E7D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatesovaPrace.Skia.Gtk", "MatesovaPrace.Skia.Gtk\MatesovaPrace.Skia.Gtk.csproj", "{EDB55143-4A30-466D-B952-73993E1AF4C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MatesovaPrace.Skia.Gtk", "MatesovaPrace.Skia.Gtk\MatesovaPrace.Skia.Gtk.csproj", "{EDB55143-4A30-466D-B952-73993E1AF4C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatesovaPrace.Windows", "MatesovaPrace.Windows\MatesovaPrace.Windows.csproj", "{8A0BDFBD-3264-4F62-BD64-D0EB34BD09CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MatesovaPrace.Windows", "MatesovaPrace.Windows\MatesovaPrace.Windows.csproj", "{8A0BDFBD-3264-4F62-BD64-D0EB34BD09CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46B8A8E0-30F7-4ECA-925C-80C114F5C1AD}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

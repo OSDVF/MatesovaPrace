@@ -16,6 +16,10 @@ namespace MatesovaPrace
     public sealed partial class App : Application
     {
         private Window _window;
+        public Window MainWindow => _window;
+#if WINDOWS
+        public Microsoft.UI.Windowing.AppWindow AppWindow;
+#endif
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -25,9 +29,9 @@ namespace MatesovaPrace
         {
             InitializeLogging();
 
-            #if __IOS__ || __ANDROID__
+#if __IOS__ || __ANDROID__
                 Uno.UI.FeatureConfiguration.Style.ConfigureNativeFrameNavigation();
-            #endif
+#endif
 
             this.InitializeComponent();
 
@@ -62,7 +66,7 @@ namespace MatesovaPrace
             // Get the AppWindow from the XAML Window ("this" is your XAML window)
             IntPtr hWnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
             WindowId myWndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(myWndId);
+            AppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(myWndId);
 #endif
             _window.Title = "Matesova Práce";
             _window.ExtendsContentIntoTitleBar = true;

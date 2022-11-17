@@ -23,6 +23,9 @@
     <UpToDateCheckInput Include="..\MatesovaPrace.Shared\**\*.xaml" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="WebLoginMessage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="WasmCSS\Fonts.css" />
     <EmbeddedResource Include="WasmScripts\AppManifest.js" />
   </ItemGroup>
@@ -54,6 +57,21 @@
     <PackageReference Include="Uno.Wasm.Bootstrap" Version="7.0.7" />
     <PackageReference Include="Uno.Wasm.Bootstrap.DevServer" Version="7.0.7" />
     <PackageReference Include="Uno.WinUI.Lottie" Version="4.6.19" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
   </ItemGroup>
   <Import Project="..\MatesovaPrace.Shared\MatesovaPrace.Shared.projitems" Label="Shared" Condition="Exists('..\MatesovaPrace.Shared\MatesovaPrace.Shared.projitems')" />
+  <ItemGroup>
+    <UpToDateCheckInput Remove="WebLoginMessage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <_Globbed_Compile Remove="WebLoginMessage.xaml.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <_Globbled_Page Remove="WebLoginMessage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="WebLoginMessage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
 </Project>

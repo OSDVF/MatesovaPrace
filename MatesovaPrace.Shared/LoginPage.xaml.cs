@@ -29,6 +29,8 @@ using Windows.UI.Popups;
 using Windows.Storage;
 using Newtonsoft.Json;
 using CommunityToolkit.Mvvm.Input;
+using System.Net.Http;
+using System.Net.Http.Json;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -39,10 +41,10 @@ namespace MatesovaPrace
     {
         const string configName = "appsettings.json";
 
-        internal static LoginModel _data = new LoginModel();
+        internal static LoginModel _data = new();
         UserCredential? credential;
         private DriveService? drive;
-
+        private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
         internal Action<ConnectionModel>? OnConnected { get; set; }
 
         public Visibility SelectedFileInfoVisible => _data.SelectedFile == null ? Visibility.Collapsed : Visibility.Visible;
@@ -51,47 +53,107 @@ namespace MatesovaPrace
         {
             InitializeComponent();
             DataContext = _data;
-
-            // Log in
-            GDriveAuth();
-
-            // Load cached settings
-            LoadSettings();
+#if WINDOWS
+            var app = (Application.Current as App);
+            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[1]).Content);
+#endif
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is Action<ConnectionModel> connected)
+            if (e.Parameter is Tuple<Action<ConnectionModel>, string> connectedAndAuth)
             {
-                OnConnected = connected;
+                OnConnected = connectedAndAuth.Item1;
+                // Generate custom user credential object from auth code passed in the URL
+                var client = new HttpClient();
+                var sec = GetClient().Secrets;
+                var redirectUri = "http://127.0.0.1";
+#if __WASM__
+                redirectUri = WebAssemblyRuntime.InvokeJS("location.origin");
+#endif
+                client.GetFromJsonAsync<dynamic>("https://oauth2.googleapis.com/token?code=" + connectedAndAuth.Item2 +
+                    "&client_id=" + sec.ClientId +
+                    "&client_secret=" + sec.ClientSecret +
+                    "&grant_type=authorization_code" +
+                    "&redirect_uri=" + redirectUri
+                    ).ContinueWith(access =>
+                            {
+                                credential = new UserCredential(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(
+                            new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
+                            {
+                                ClientSecrets = sec
+                            }
+                            ), "user", new Google.Apis.Auth.OAuth2.Responses.TokenResponse
+                            {
+                                AccessToken = access.Result.access_token,
+                                ExpiresInSeconds = access.Result.expire_in,
+                                IssuedUtc = DateTime.UtcNow,
+                                Scope = access.Result.scope,
+                                TokenType = "Bearer"
+                            }
+                        );
+                            });
+
+                try
+                {
+                    Console.WriteLine("Creating drive service #2");
+                    CreateDriveService();
+                    LoadSettings();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to create drive service because {ex.Message} {ex.StackTrace}");
+                }
+            }
+            else
+            {
+                if (e.Parameter is Action<ConnectionModel> connected)
+                {
+                    OnConnected = connected;
+                }
+
+                // Load cached settings
+                LoadSettings();
+                // Show log in page or load offline login
+                GDriveAuth();
             }
             base.OnNavigatedTo(e);
         }
 
         async void LoadSettings()
         {
-            var cFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(configName, CreationCollisionOption.OpenIfExists);
-            using (var stream = await cFile.OpenStreamForReadAsync())
+            Console.WriteLine("Loading settings");
+            try
             {
+                var cFile = await ApplicationData.Current.LocalFolder.CreateFileAsync(configName, CreationCollisionOption.OpenIfExists);
+                using var stream = await cFile.OpenStreamForReadAsync();
                 try
                 {
+                    Console.WriteLine("Deserializer");
                     using var sReader = new StreamReader(stream);
                     var reader = new JsonTextReader(sReader);
                     var serializer = new Newtonsoft.Json.JsonSerializer();
+                    Console.WriteLine("Deserializing");
                     dynamic settings = serializer.Deserialize(reader);
-
+                    Console.WriteLine("D 2");
                     if (settings.DataSource != null)
                     {
+                        Console.WriteLine("D 3");
                         if (settings.DataSource.SheetId != null)
                         {
+                            Console.WriteLine("D 4");
                             _data.SheetId = settings.DataSource.SheetId;
                         }
                     }
                 }
-                catch(Exception)
+                catch (Exception)
                 {
                     Console.WriteLine($"Could not read {configName}");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to connect to config file {ex.Message} {ex.StackTrace}");
             }
         }
 
@@ -128,33 +190,50 @@ namespace MatesovaPrace
         {
             if (credential != null)
             {
+                Console.WriteLine("Already authenticated");
                 return;
             }
 #if __WASM__
-            WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&include_granted_scopes=true&response_type=token&redirect_uri=\""+
+            Console.WriteLine("Opening web authentication");
+            WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&include_granted_scopes=true&redirect_uri=\"" +
                 "+encodeURI(location)+"
 #if DEBUG
-                + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com\")");
+                + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com&response_type=code\")");
 #else
-                + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com\")");
+                + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=token\")");
 #endif
+            Frame.Navigate(typeof(WebLoginMessage));
+            return;
 #else
-            var resourceLoader = ResourceLoader.GetForCurrentView();
-            var clientSecretString = resourceLoader.GetString("client");
-            var secretContainer = NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(clientSecretString);
+            Console.WriteLine("Authenticating for offline use");
+            GoogleClientSecrets secretContainer = GetClient();
             credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 secretContainer.Secrets,
                 new[] {
                         SheetsService.Scope.Spreadsheets,
                         DriveService.Scope.Drive
                 },
-                "user", CancellationToken.None);
+                "user", CancellationToken.None,null, receiver);
 #endif
+            Console.WriteLine("Creating drive service #1");
+            CreateDriveService();
+        }
+
+        private void CreateDriveService()
+        {
             drive = new DriveService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
                 ApplicationName = "MatesovaPrace",
             });
+            Console.WriteLine("GDrive service created");
+        }
+
+        private static GoogleClientSecrets GetClient()
+        {
+            var resourceLoader = ResourceLoader.GetForViewIndependentUse();
+            var clientSecretString = resourceLoader.GetString("client");
+            return NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(clientSecretString);
         }
 
         private async void Search_Click(object sender, RoutedEventArgs e)
@@ -173,7 +252,7 @@ namespace MatesovaPrace
             };
         }
 
-        void SearchFiles(bool morePages = false)
+        async void SearchFiles(bool morePages = false)
         {
             var listRequest = drive.Files.List();
             listRequest.IncludeItemsFromAllDrives = _data.IncludeSharedFiles;
@@ -184,7 +263,7 @@ namespace MatesovaPrace
             {
                 listRequest.PageToken = _data.NextPageToken;
             }
-            var fileList = listRequest.Execute();
+            var fileList = await listRequest.ExecuteAsync();
             _data.FoundFiles.Clear();
             foreach (var file in fileList.Files)
             {
@@ -194,7 +273,7 @@ namespace MatesovaPrace
             _data.NextPageToken = fileList.NextPageToken;
         }
 
-        RelayCommand<FileListModel> MarkFileAsSelected = new RelayCommand<FileListModel>((FileListModel file) =>
+        RelayCommand<FileListModel> MarkFileAsSelected { get; set; } = new RelayCommand<FileListModel>((FileListModel file) =>
         {
             _data.SelectedFile = file;
         });

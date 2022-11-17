@@ -27,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\ConnectionModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\LoginModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\PersonModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="$(MSBuildThisFileDirectory)LoginPage.xaml">
