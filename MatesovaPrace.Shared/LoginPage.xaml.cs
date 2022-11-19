@@ -31,6 +31,13 @@ using Newtonsoft.Json;
 using CommunityToolkit.Mvvm.Input;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Reflection;
+using Uno.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Uno.Extensions.Configuration;
+using Windows.Networking.NetworkOperators;
+using Uno.Extensions;
+using Windows.Media.Protection.PlayReady;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -45,16 +52,18 @@ namespace MatesovaPrace
         UserCredential? credential;
         private DriveService? drive;
         private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
+        private UWPAuthStorage authStorage = new();
         private App? app;
-
+        private GoogleClientSecrets gClient;
         internal Action<ConnectionModel>? OnConnected { get; set; }
-
-        public Visibility SelectedFileInfoVisible => _data.SelectedFile == null ? Visibility.Collapsed : Visibility.Visible;
         public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
         public LoginPage()
         {
             InitializeComponent();
             DataContext = _data;
+            // Inject client secret into configuration
+            GetClient();
+
 #if WINDOWS
             app = (Application.Current as App);
             SetTitleBar();
@@ -82,35 +91,40 @@ namespace MatesovaPrace
             if (e.Parameter is Tuple<Action<ConnectionModel>, string> connectedAndAuth)
             {
                 OnConnected = connectedAndAuth.Item1;
-                // Generate custom user credential object from auth code passed in the URL
+                // Exchange code for an access token
                 var client = new HttpClient();
-                var sec = GetClient().Secrets;
-                var redirectUri = "http://127.0.0.1";
+                var sec = gClient.Secrets;
+                var redirectUri = "http://127.0.0.1";//Default fallback
 #if __WASM__
                 redirectUri = WebAssemblyRuntime.InvokeJS("location.origin");
+
+                client.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(new List<KeyValuePair<string, string>>{
+                        new("code", connectedAndAuth.Item2 ),
+                        new("client_id" , sec.ClientId ) ,
+                        new( "client_secret" , sec.ClientSecret ),
+                        new( "grant_type","authorization_code"),
+                        new( "redirect_uri" , redirectUri+"/" ) }
+                    )
+                ).ContinueWith(async access =>
+                    {
+                        JsonElement objectResponse = await access.Result.Content.ReadFromJsonAsync<JsonElement>();
+                        credential = new UserCredential(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(
+                        new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
+                        {
+                            ClientSecrets = sec
+                        }
+                        ), "user", new Google.Apis.Auth.OAuth2.Responses.TokenResponse
+                        {
+                            AccessToken = objectResponse.GetProperty("access_token").GetString(),
+                            ExpiresInSeconds = objectResponse.GetProperty("expire_in").GetInt64(),
+                            IssuedUtc = DateTime.UtcNow,
+                            Scope = objectResponse.GetProperty("scope").GetString(),
+                            RefreshToken = objectResponse.GetProperty("refresh_token").GetString(),
+                            TokenType = "Bearer"
+                        }
+                    );
+                });
 #endif
-                client.GetFromJsonAsync<dynamic>("https://oauth2.googleapis.com/token?code=" + connectedAndAuth.Item2 +
-                    "&client_id=" + sec.ClientId +
-                    "&client_secret=" + sec.ClientSecret +
-                    "&grant_type=authorization_code" +
-                    "&redirect_uri=" + redirectUri
-                    ).ContinueWith(access =>
-                            {
-                                credential = new UserCredential(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(
-                            new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
-                            {
-                                ClientSecrets = sec
-                            }
-                            ), "user", new Google.Apis.Auth.OAuth2.Responses.TokenResponse
-                            {
-                                AccessToken = access.Result.access_token,
-                                ExpiresInSeconds = access.Result.expire_in,
-                                IssuedUtc = DateTime.UtcNow,
-                                Scope = access.Result.scope,
-                                TokenType = "Bearer"
-                            }
-                        );
-                            });
 
                 try
                 {
@@ -213,10 +227,11 @@ namespace MatesovaPrace
             }
 #if __WASM__
             Console.WriteLine("Opening web authentication");
-            WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&include_granted_scopes=true&redirect_uri=\"" +
+            WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&redirect_uri=\"" +
                 "+encodeURI(location)+"
 #if DEBUG
-                + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com&response_type=code\")");
+            + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com&response_type=code\")");
+            //+ "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=code\")");
 #else
                 + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=token\")");
 #endif
@@ -224,14 +239,13 @@ namespace MatesovaPrace
             return;
 #else
             Console.WriteLine("Authenticating for offline use");
-            GoogleClientSecrets secretContainer = GetClient();
             credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                secretContainer.Secrets,
+                gClient.Secrets,
                 new[] {
                         SheetsService.Scope.Spreadsheets,
                         DriveService.Scope.Drive
                 },
-                "user", CancellationToken.None,null, receiver);
+                "user", CancellationToken.None, null, receiver);
 #endif
             Console.WriteLine("Creating drive service #1");
             CreateDriveService();
@@ -247,11 +261,24 @@ namespace MatesovaPrace
             Console.WriteLine("GDrive service created");
         }
 
-        private static GoogleClientSecrets GetClient()
+        private void GetClient()
         {
-            var resourceLoader = ResourceLoader.GetForViewIndependentUse();
-            var clientSecretString = resourceLoader.GetString("client");
-            return NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(clientSecretString);
+            try
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                string resourceName = assembly.GetManifestResourceNames()
+                    .Single(str => str.EndsWith("client.json"));
+                using Stream stream = assembly.GetManifestResourceStream(resourceName);
+                gClient = NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(stream);
+            }
+            catch(Exception)
+            {
+                new ContentDialog
+                {
+                    Content = "Application was compiled withou Google Client token",
+                    Title = "Error"
+                }.ShowAsync();
+            }
         }
 
         private async void Search_Click(object sender, RoutedEventArgs e)
@@ -291,7 +318,7 @@ namespace MatesovaPrace
             _data.NextPageToken = fileList.NextPageToken;
         }
 
-        RelayCommand<FileListModel> MarkFileAsSelected { get; set; } = new RelayCommand<FileListModel>((FileListModel file) =>
+        public RelayCommand<FileListModel> MarkFileAsSelected { get; set; } = new RelayCommand<FileListModel>((FileListModel? file) =>
         {
             _data.SelectedFile = file;
         });

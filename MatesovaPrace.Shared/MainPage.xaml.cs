@@ -28,13 +28,8 @@ namespace MatesovaPrace
     {
         AccommodationPageModel model = new();
         private App? app;
-
-        public Visibility LoginRequestVisible => model.Connection == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
         public bool HideUnlogged { get; set; } = false;
-        string? ManualAuthCode { get; set; }
-        bool FoundAuthCode { get; set; } = false;
-
-        public Visibility AutoAuthVisibility => FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
+        string ManualAuthCode { get; set; } = "";
         public Visibility GridVisibility => model.Connection != null ? Visibility.Visible : Visibility.Collapsed;
 
         public MainPage()
@@ -68,7 +63,7 @@ namespace MatesovaPrace
             if(!string.IsNullOrEmpty(authCode))
             {
                 ManualAuthCode = authCode;
-                FoundAuthCode = true;
+                model.FoundAuthCode = true;
             }
 #endif
         }

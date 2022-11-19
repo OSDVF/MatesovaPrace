@@ -27,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\ConnectionModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\LoginModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\PersonModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UWPAuthStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -46,9 +47,12 @@
     <PRIResource Include="$(MSBuildThisFileDirectory)Strings\en\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)appsettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)client.json" />
   </ItemGroup>
   <Import Project="MatesovaPrace.Shared.globs.props" Condition="'$(IsCodeSharingProject)'!='true'" />
 </Project>

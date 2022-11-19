@@ -47,7 +47,7 @@
 
                     <TwoPaneView.Pane2>
                         <!--Information about selected file-->
-                        <StackPanel Visibility="{x:Bind SelectedFileInfoVisible}">
+                        <StackPanel Visibility="{Binding SelectedFileInfoVisible}">
                             <TextBlock Text="{Binding SelectedFile.Name}" FontSize="16" />
                             <TextBlock Text="{Binding SelectedFile.Id}" Foreground="Gray" />
                             <Image Source="{Binding SelectedFile.Info.IconLink}"/>

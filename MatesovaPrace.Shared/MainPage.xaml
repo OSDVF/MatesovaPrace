@@ -1,5 +1,6 @@
 ﻿<Page
     x:Class="MatesovaPrace.MainPage"
+    x:Name="MainPageElement"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:MatesovaPrace"
@@ -15,13 +16,13 @@
         <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
             <AppBarElementContainer>
                 <StackPanel>
-                    <TextBlock Visibility="{x:Bind LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
-                    <TextBlock Visibility="{x:Bind AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
+                    <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
+                    <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
                     <TextBlock Visibility="{x:Bind GridVisibility}" Text="Matesova Práce" FontSize="18" Margin="12,8" />
                 </StackPanel>
             </AppBarElementContainer>
         </CommandBar>
-        <StackPanel Visibility="{x:Bind LoginRequestVisible}" Margin="20">
+        <StackPanel Visibility="{Binding LoginRequestVisible}" Margin="20">
             <Button Content="Log in" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
                 <StackPanel>
@@ -31,7 +32,7 @@
                 </StackPanel>
             </Expander>
         </StackPanel>
-        <StackPanel Visibility="{x:Bind AutoAuthVisibility}" Margin="20">
+        <StackPanel Visibility="{Binding AutoAuthVisibility}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Visibility="{x:Bind GridVisibility}">
