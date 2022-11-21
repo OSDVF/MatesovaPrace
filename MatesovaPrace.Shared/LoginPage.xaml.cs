@@ -38,6 +38,8 @@ using Uno.Extensions.Configuration;
 using Windows.Networking.NetworkOperators;
 using Uno.Extensions;
 using Windows.Media.Protection.PlayReady;
+using Google.Apis.Auth.OAuth2.Flows;
+using Newtonsoft.Json.Linq;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -52,7 +54,7 @@ namespace MatesovaPrace
         UserCredential? credential;
         private DriveService? drive;
         private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
-        private UWPAuthStorage authStorage = new();
+        private UWPObjectStorage objectStorage = new();
         private App? app;
         private GoogleClientSecrets gClient;
         internal Action<ConnectionModel>? OnConnected { get; set; }
@@ -94,48 +96,27 @@ namespace MatesovaPrace
                 // Exchange code for an access token
                 var client = new HttpClient();
                 var sec = gClient.Secrets;
-                var redirectUri = "http://127.0.0.1";//Default fallback
+                var redirectUri = "http://127.0.0.1/";//Default fallback
 #if __WASM__
-                redirectUri = WebAssemblyRuntime.InvokeJS("location.origin");
-
-                client.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(new List<KeyValuePair<string, string>>{
-                        new("code", connectedAndAuth.Item2 ),
-                        new("client_id" , sec.ClientId ) ,
-                        new( "client_secret" , sec.ClientSecret ),
-                        new( "grant_type","authorization_code"),
-                        new( "redirect_uri" , redirectUri+"/" ) }
-                    )
-                ).ContinueWith(async access =>
-                    {
-                        JsonElement objectResponse = await access.Result.Content.ReadFromJsonAsync<JsonElement>();
-                        credential = new UserCredential(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(
-                        new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
-                        {
-                            ClientSecrets = sec
-                        }
-                        ), "user", new Google.Apis.Auth.OAuth2.Responses.TokenResponse
-                        {
-                            AccessToken = objectResponse.GetProperty("access_token").GetString(),
-                            ExpiresInSeconds = objectResponse.GetProperty("expire_in").GetInt64(),
-                            IssuedUtc = DateTime.UtcNow,
-                            Scope = objectResponse.GetProperty("scope").GetString(),
-                            RefreshToken = objectResponse.GetProperty("refresh_token").GetString(),
-                            TokenType = "Bearer"
-                        }
-                    );
-                });
+                // Redirect back to where we are right now
+                redirectUri = WebAssemblyRuntime.InvokeJS("location.origin") + "/";
 #endif
-
-                try
+                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
                 {
-                    Console.WriteLine("Creating drive service #2");
+                    ClientSecrets = sec,
+                    DataStore = objectStorage,
+                    Scopes = new[]
+                    {
+                        DriveService.Scope.Drive
+                    }
+                });
+                flow.ExchangeCodeForTokenAsync("user", connectedAndAuth.Item2, redirectUri, CancellationToken.None)
+                    .ContinueWith(response =>
+                {
+                    credential = new UserCredential(flow, "user", response.Result);
                     CreateDriveService();
                     LoadSettings();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to create drive service because {ex.Message} {ex.StackTrace}");
-                }
+                });
             }
             else
             {
@@ -226,15 +207,24 @@ namespace MatesovaPrace
                 return;
             }
 #if __WASM__
-            Console.WriteLine("Opening web authentication");
-            WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&redirect_uri=\"" +
-                "+encodeURI(location)+"
+            credential = objectStorage.Get<UserCredential>();
+            if(credential == null)
+            {
+                Console.WriteLine("Opening web authentication");
+                WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&redirect_uri=\"" +
+                    "+encodeURI(location)+"
 #if DEBUG
-            + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com&response_type=code\")");
-            //+ "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=code\")");
+                + "\"&client_id=859872582086-aej576ehl3r10lgljrc0an8m44jj4io7.apps.googleusercontent.com&response_type=code&access_type=offline\")");
+                //+ "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=code\")");
 #else
-                + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=token\")");
+                    + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=token\")");
+            
 #endif
+            }
+            else
+            {
+                Console.WriteLine("Loaded credentials from cache");
+            }
             Frame.Navigate(typeof(WebLoginMessage));
             return;
 #else
@@ -245,7 +235,7 @@ namespace MatesovaPrace
                         SheetsService.Scope.Spreadsheets,
                         DriveService.Scope.Drive
                 },
-                "user", CancellationToken.None, null, receiver);
+                "user", CancellationToken.None, objectStorage, receiver);
 #endif
             Console.WriteLine("Creating drive service #1");
             CreateDriveService();
@@ -271,7 +261,7 @@ namespace MatesovaPrace
                 using Stream stream = assembly.GetManifestResourceStream(resourceName);
                 gClient = NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(stream);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 new ContentDialog
                 {

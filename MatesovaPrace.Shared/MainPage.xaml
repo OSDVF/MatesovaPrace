@@ -23,11 +23,11 @@
             </AppBarElementContainer>
         </CommandBar>
         <StackPanel Visibility="{Binding LoginRequestVisible}" Margin="20">
-            <Button Content="Log in" Click="ShowLoginPage_Click"/>
+            <Button Content="Select Google Sheet" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
                 <StackPanel>
                     <TextBlock Text="Enter authentication code manually" />
-                    <TextBox Text="{x:Bind ManualAuthCode}"/>
+                    <local:Entry Text="{Binding ManualAuthCode, Mode=TwoWay}" Confirmed="ManualAuth_Click"/>
                     <Button Content="Authenticate" Click="ManualAuth_Click"/>
                 </StackPanel>
             </Expander>

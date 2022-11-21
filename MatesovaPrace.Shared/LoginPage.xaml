@@ -21,13 +21,12 @@
         <ScrollViewer>
             <StackPanel Padding="5">
                 <TextBlock Text="Find a sheet from google drive." />
-                <TextBox Text="{Binding FindString}" />
+                <local:Entry Text="{Binding FindString}" Confirmed="Search_Click" />
                 <Button Content="Find" Click="Search_Click"/>
                 <CheckBox Content="Include files from shared drives" IsChecked="{Binding IncludeSharedFiles}"/>
 
                 <TextBlock Text="Or enter sheet ID manually." />
-                <TextBox Text="{Binding SheetId}" />
-
+                <local:Entry Text="{Binding SheetId}" Confirmed="Manual_Click"/>
                 <Button Content="Connect to sheet" Click="Manual_Click"/>
 
                 <TwoPaneView PanePriority="Pane1" TallModeConfiguration="TopBottom" WideModeConfiguration="LeftRight">

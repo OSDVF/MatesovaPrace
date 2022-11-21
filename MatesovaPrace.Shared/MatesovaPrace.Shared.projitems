@@ -18,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoginPage.xaml.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -27,7 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\ConnectionModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\LoginModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\PersonModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)UWPAuthStorage.cs" />
+    <Compile Include="..\MatesovaPrace.Shared\UWPObjectStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
   <ItemGroup>

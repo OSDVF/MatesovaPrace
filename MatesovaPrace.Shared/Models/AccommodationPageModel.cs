@@ -11,13 +11,14 @@ namespace MatesovaPrace.Models
     partial class AccommodationPageModel : INotifyPropertyChanged
     {
         private bool foundAuthCode = false;
+        private string manualAuthCode;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public bool FoundAuthCode
         {
             get => foundAuthCode; set
             {
-                if(foundAuthCode != value)
+                if (foundAuthCode != value)
                 {
                     foundAuthCode = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FoundAuthCode)));
@@ -31,5 +32,14 @@ namespace MatesovaPrace.Models
 
         public ConnectionModel? Connection { get; set; }
         public ObservableCollection<PersonModel> People { get; set; } = new();
+        public string ManualAuthCode
+        {
+            get => manualAuthCode; set
+            {
+                manualAuthCode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ManualAuthCode)));
+
+            }
+        }
     }
 }

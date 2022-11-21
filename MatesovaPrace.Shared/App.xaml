@@ -12,6 +12,7 @@
             </ResourceDictionary.MergedDictionaries>
             <!-- Add resources here -->
             <SolidColorBrush x:Key="WindowCaptionBackground">Transparent</SolidColorBrush>
+            <Style TargetType="local:Entry" BasedOn="{StaticResource DefaultTextBoxStyle}" />
         </ResourceDictionary>
     </Application.Resources>
 

@@ -1,7 +1,9 @@
 ﻿using Google.Apis.Json;
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
+using Uno.Extensions;
 using Windows.Storage;
 
 namespace Google.Apis.Util.Store
@@ -10,9 +12,8 @@ namespace Google.Apis.Util.Store
     /// File data store that implements <see cref="IDataStore"/>. This store creates a different file for each 
     /// combination of type and key. This file data store stores a JSON format of the specified object.
     /// </summary>
-    public class UWPAuthStorage : IDataStore
+    public class UWPObjectStorage : IDataStore
     {
-        private const string XdgDataHomeSubdirectory = "google-filedatastore";
         private static readonly Task CompletedTask = Task.FromResult(0);
 
         readonly string folderPath;
@@ -30,7 +31,7 @@ namespace Google.Apis.Util.Store
         /// Defines whether the folder parameter is absolute or relative to
         /// <c>Environment.SpecialFolder.ApplicationData</c> on Windows, or<c>$HOME</c> on Linux and MacOS.
         /// </param>
-        public UWPAuthStorage()
+        public UWPObjectStorage()
         {
             folderPath = ApplicationData.Current.LocalFolder.Path;
         }
@@ -42,7 +43,7 @@ namespace Google.Apis.Util.Store
         /// <typeparam name="T">The type to store in the data store.</typeparam>
         /// <param name="key">The key.</param>
         /// <param name="value">The value to store in the data store.</param>
-        public Task StoreAsync<T>(string key, T value)
+        public async Task StoreAsync<T>(string key, T value)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -50,9 +51,8 @@ namespace Google.Apis.Util.Store
             }
 
             var serialized = NewtonsoftJsonSerializer.Instance.Serialize(value);
-            var filePath = Path.Combine(folderPath, GenerateStoredKey(key, typeof(T)));
-            File.WriteAllText(filePath, serialized);
-            return CompletedTask;
+            using var stream = await ApplicationData.Current.LocalFolder.OpenStreamForWriteAsync(GenerateStoredKey(key, typeof(T)), CreationCollisionOption.ReplaceExisting);
+            await stream.WriteAsync(Encoding.Unicode.GetBytes(serialized));
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace Google.Apis.Util.Store
         /// <typeparam name="T">The type to retrieve.</typeparam>
         /// <param name="key">The key to retrieve from the data store.</param>
         /// <returns>The stored object.</returns>
-        public Task<T> GetAsync<T>(string key)
+        public async Task<T> GetAsync<T>(string key)
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -90,24 +90,24 @@ namespace Google.Apis.Util.Store
             }
 
             TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
-            var filePath = Path.Combine(folderPath, GenerateStoredKey(key, typeof(T)));
-            if (File.Exists(filePath))
+
+            try
             {
+                using var stream = await ApplicationData.Current.LocalFolder.OpenStreamForReadAsync(GenerateStoredKey(key, typeof(T)));
                 try
                 {
-                    var obj = File.ReadAllText(filePath);
-                    tcs.SetResult(NewtonsoftJsonSerializer.Instance.Deserialize<T>(obj));
+                    var obj = stream.ReadToEnd();
+                    return NewtonsoftJsonSerializer.Instance.Deserialize<T>(obj);
                 }
                 catch (Exception ex)
                 {
-                    tcs.SetException(ex);
+                    throw;
                 }
             }
-            else
+            catch (Exception)
             {
-                tcs.SetResult(default(T));
+                return default(T);
             }
-            return tcs.Task;
         }
 
         /// <summary>
@@ -132,4 +132,4 @@ namespace Google.Apis.Util.Store
             return string.Format("{0}-{1}", t.FullName, key);
         }
     }
-}   
+}

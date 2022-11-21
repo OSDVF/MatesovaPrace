@@ -11,8 +11,8 @@
     <StackPanel>
         <CommandBar HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
             <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
-            <AppBarElementContainer Height="10">
-                <TextBlock Text="Google Drive authentication" FontSize="20" Margin="12,8" Height="10"/>
+            <AppBarElementContainer>
+                <TextBlock Text="Google Drive authentication" FontSize="18" Margin="12,8"/>
             </AppBarElementContainer>
         </CommandBar>
         <TextBlock Margin="10" Text="Continue to the Google Drive in the newly opened tab" FontSize="20" />

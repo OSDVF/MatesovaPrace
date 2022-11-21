@@ -29,7 +29,6 @@ namespace MatesovaPrace
         AccommodationPageModel model = new();
         private App? app;
         public bool HideUnlogged { get; set; } = false;
-        string ManualAuthCode { get; set; } = "";
         public Visibility GridVisibility => model.Connection != null ? Visibility.Visible : Visibility.Collapsed;
 
         public MainPage()
@@ -62,7 +61,7 @@ namespace MatesovaPrace
             string authCode = WebAssemblyRuntime.InvokeJS("new URLSearchParams(location.search).get('code')");
             if(!string.IsNullOrEmpty(authCode))
             {
-                ManualAuthCode = authCode;
+                model.ManualAuthCode = authCode;
                 model.FoundAuthCode = true;
             }
 #endif
@@ -75,7 +74,7 @@ namespace MatesovaPrace
 
         void ManualAuth_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(LoginPage), new Tuple<Action<ConnectionModel>, string>(OnLoggedIn, ManualAuthCode));
+            Frame.Navigate(typeof(LoginPage), new Tuple<Action<ConnectionModel>, string>(OnLoggedIn, model.ManualAuthCode));
         }
 
         void OnLoggedIn(ConnectionModel newConnection)
