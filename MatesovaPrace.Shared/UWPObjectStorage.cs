@@ -89,15 +89,14 @@ namespace Google.Apis.Util.Store
                 throw new ArgumentException("Key MUST have a value");
             }
 
-            TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
-
             try
             {
                 using var stream = await ApplicationData.Current.LocalFolder.OpenStreamForReadAsync(GenerateStoredKey(key, typeof(T)));
                 try
                 {
-                    var obj = stream.ReadToEnd();
-                    return NewtonsoftJsonSerializer.Instance.Deserialize<T>(obj);
+                    using StreamReader reader = new(stream, Encoding.Unicode);
+                    var str = reader.ReadToEnd();
+                    return NewtonsoftJsonSerializer.Instance.Deserialize<T>(str);
                 }
                 catch (Exception ex)
                 {

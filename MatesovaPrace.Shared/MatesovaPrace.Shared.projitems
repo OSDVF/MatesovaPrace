@@ -28,6 +28,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\ConnectionModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\LoginModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\PersonModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\UserCircleModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UserCircle.xaml.cs" />
     <Compile Include="..\MatesovaPrace.Shared\UWPObjectStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
@@ -37,6 +39,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="$(MSBuildThisFileDirectory)MainPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)UserCircle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

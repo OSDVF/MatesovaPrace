@@ -489,6 +489,26 @@ namespace Google.Apis.Auth.OAuth2
 
         protected virtual bool OpenBrowser(string url)
         {
+            // See https://github.com/dotnet/corefx/issues/10361
+            // This is best-effort only, but should work most of the time.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // See https://stackoverflow.com/a/6040946/44360 for why this is required
+                url = System.Text.RegularExpressions.Regex.Replace(url, @"(\\*)" + "\"", @"$1$1\" + "\"");
+                url = System.Text.RegularExpressions.Regex.Replace(url, @"(\\+)$", @"$1$1");
+                Process.Start(new ProcessStartInfo("cmd", $"/c start \"\" \"{url}\"") { CreateNoWindow = true });
+                return true;
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+                return true;
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+                return true;
+            }
             Browser.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
             return true;
         }

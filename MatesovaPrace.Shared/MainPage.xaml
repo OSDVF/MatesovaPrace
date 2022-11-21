@@ -13,15 +13,18 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <StackPanel>
-        <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
-            <AppBarElementContainer>
-                <StackPanel>
-                    <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
-                    <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
-                    <TextBlock Visibility="{x:Bind GridVisibility}" Text="Matesova Práce" FontSize="18" Margin="12,8" />
-                </StackPanel>
-            </AppBarElementContainer>
-        </CommandBar>
+        <StackPanel Orientation="Horizontal">
+            <local:UserCircle Margin="5,0,0,0" Credential="{Binding Connection.Credential, Mode=TwoWay}" />
+            <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+                <AppBarElementContainer>
+                    <StackPanel>
+                        <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
+                        <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
+                        <TextBlock Visibility="{x:Bind GridVisibility}" Text="Matesova Práce" FontSize="18" Margin="12,8" />
+                    </StackPanel>
+                </AppBarElementContainer>
+            </CommandBar>
+        </StackPanel>
         <StackPanel Visibility="{Binding LoginRequestVisible}" Margin="20">
             <Button Content="Select Google Sheet" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">

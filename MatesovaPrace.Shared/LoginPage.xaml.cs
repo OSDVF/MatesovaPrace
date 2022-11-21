@@ -7,39 +7,22 @@ using Google.Apis.Util.Store;
 using MatesovaPrace.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Resources;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Storage.Pickers;
-using Windows.UI.Popups;
 using Windows.Storage;
 using Newtonsoft.Json;
 using CommunityToolkit.Mvvm.Input;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Reflection;
-using Uno.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using Uno.Extensions.Configuration;
-using Windows.Networking.NetworkOperators;
 using Uno.Extensions;
-using Windows.Media.Protection.PlayReady;
 using Google.Apis.Auth.OAuth2.Flows;
-using Newtonsoft.Json.Linq;
+using Google.Apis.Sheets.v4.Data;
+using Google.Apis.Auth.OAuth2.Responses;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -51,7 +34,16 @@ namespace MatesovaPrace
         const string configName = "appsettings.json";
 
         internal static LoginModel _data = new();
-        UserCredential? credential;
+
+        public UserCredential? Credential
+        {
+            get { return (UserCredential?)GetValue(CredentialProperty); }
+            set { SetValue(CredentialProperty, value); }
+        }
+
+        public static readonly DependencyProperty CredentialProperty =
+            DependencyProperty.Register("Credential", typeof(UserCredential), typeof(LoginPage), new PropertyMetadata(null));
+
         private DriveService? drive;
         private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
         private UWPObjectStorage objectStorage = new();
@@ -75,7 +67,7 @@ namespace MatesovaPrace
 
         private void SetTitleBar()
         {
-            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[1]).Content);
+            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[2]).Content);
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -95,28 +87,19 @@ namespace MatesovaPrace
                 OnConnected = connectedAndAuth.Item1;
                 // Exchange code for an access token
                 var client = new HttpClient();
-                var sec = gClient.Secrets;
                 var redirectUri = "http://127.0.0.1/";//Default fallback
 #if __WASM__
                 // Redirect back to where we are right now
                 redirectUri = WebAssemblyRuntime.InvokeJS("location.origin") + "/";
 #endif
-                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
-                {
-                    ClientSecrets = sec,
-                    DataStore = objectStorage,
-                    Scopes = new[]
-                    {
-                        DriveService.Scope.Drive
-                    }
-                });
+                GoogleAuthorizationCodeFlow flow = GetFlow();
                 flow.ExchangeCodeForTokenAsync("user", connectedAndAuth.Item2, redirectUri, CancellationToken.None)
                     .ContinueWith(response =>
-                {
-                    credential = new UserCredential(flow, "user", response.Result);
-                    CreateDriveService();
-                    LoadSettings();
-                });
+                    {
+                        Credential = new UserCredential(flow, "user", response.Result);
+                        CreateDriveService();
+                        LoadSettings();
+                    });
             }
             else
             {
@@ -131,6 +114,19 @@ namespace MatesovaPrace
                 GDriveAuth();
             }
             base.OnNavigatedTo(e);
+        }
+
+        private GoogleAuthorizationCodeFlow GetFlow()
+        {
+            return new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
+            {
+                ClientSecrets = gClient.Secrets,
+                DataStore = objectStorage,
+                Scopes = new[]
+                                {
+                        DriveService.Scope.Drive
+                    }
+            });
         }
 
         async void LoadSettings()
@@ -201,15 +197,16 @@ namespace MatesovaPrace
 
         public async Task GDriveAuth()
         {
-            if (credential != null)
+            if (Credential != null)
             {
                 Console.WriteLine("Already authenticated");
                 return;
             }
-#if __WASM__
-            credential = objectStorage.Get<UserCredential>();
-            if(credential == null)
+            var token = objectStorage.Get<TokenResponse>();
+            if (token == null)
             {
+#if __WASM__
+            
                 Console.WriteLine("Opening web authentication");
                 WebAssemblyRuntime.InvokeJS("open(\"https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive&redirect_uri=\"" +
                     "+encodeURI(location)+"
@@ -220,24 +217,25 @@ namespace MatesovaPrace
                     + "\"&client_id=859872582086-3gge5prcrrmo08navcfbajddiar5earp.apps.googleusercontent.com&response_type=token\")");
             
 #endif
+                Frame.Navigate(typeof(WebLoginMessage));
+                return;
+#else
+                Console.WriteLine("Authenticating for offline use");
+                Credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    gClient.Secrets,
+                    new[] {
+                        SheetsService.Scope.Spreadsheets,
+                        DriveService.Scope.Drive
+                    },
+                    "user", CancellationToken.None, objectStorage, receiver);
+#endif
+                Console.WriteLine("Creating drive service #1");
             }
             else
             {
+                Credential = new UserCredential(GetFlow(), "user", token);
                 Console.WriteLine("Loaded credentials from cache");
             }
-            Frame.Navigate(typeof(WebLoginMessage));
-            return;
-#else
-            Console.WriteLine("Authenticating for offline use");
-            credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                gClient.Secrets,
-                new[] {
-                        SheetsService.Scope.Spreadsheets,
-                        DriveService.Scope.Drive
-                },
-                "user", CancellationToken.None, objectStorage, receiver);
-#endif
-            Console.WriteLine("Creating drive service #1");
             CreateDriveService();
         }
 
@@ -245,7 +243,7 @@ namespace MatesovaPrace
         {
             drive = new DriveService(new BaseClientService.Initializer()
             {
-                HttpClientInitializer = credential,
+                HttpClientInitializer = Credential,
                 ApplicationName = "MatesovaPrace",
             });
             Console.WriteLine("GDrive service created");
