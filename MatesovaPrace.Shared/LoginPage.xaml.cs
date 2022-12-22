@@ -23,6 +23,7 @@ using Uno.Extensions;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Auth.OAuth2.Responses;
+using System.Net.Sockets;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -249,7 +250,7 @@ namespace MatesovaPrace
             Console.WriteLine("GDrive service created");
         }
 
-        private void GetClient()
+        private async void GetClient()
         {
             try
             {
@@ -261,10 +262,12 @@ namespace MatesovaPrace
             }
             catch (Exception)
             {
-                new ContentDialog
+                await new ContentDialog
                 {
-                    Content = "Application was compiled withou Google Client token",
-                    Title = "Error"
+                    Content = "Application was compiled without Google Client token",
+                    Title = "Error",
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
                 }.ShowAsync();
             }
         }
@@ -296,14 +299,37 @@ namespace MatesovaPrace
             {
                 listRequest.PageToken = _data.NextPageToken;
             }
-            var fileList = await listRequest.ExecuteAsync();
-            _data.FoundFiles.Clear();
-            foreach (var file in fileList.Files)
+            try
             {
-                var foundFile = FileToListModel(file);
-                _data.FoundFiles.Add(foundFile);
+                var fileList = await listRequest.ExecuteAsync();
+                _data.FoundFiles.Clear();
+                foreach (var file in fileList.Files)
+                {
+                    var foundFile = FileToListModel(file);
+                    _data.FoundFiles.Add(foundFile);
+                }
+                _data.NextPageToken = fileList.NextPageToken;
             }
-            _data.NextPageToken = fileList.NextPageToken;
+            catch(HttpRequestException e)
+            {
+                await new ContentDialog
+                {
+                    Content = e.Message,
+                    Title = "Network Error",
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
+                }.ShowAsync();
+            }
+            catch(Exception e)
+            {
+                await new ContentDialog
+                {
+                    Content = e.Message,
+                    Title = "General Error",
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
+                }.ShowAsync();
+            }
         }
 
         public RelayCommand<FileListModel> MarkFileAsSelected { get; set; } = new RelayCommand<FileListModel>((FileListModel? file) =>

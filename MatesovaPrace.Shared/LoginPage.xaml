@@ -37,10 +37,15 @@
                     <TwoPaneView.Pane1>
                         <StackPanel>
                             <!--Display list of searched files-->
-                            <ItemsControl ItemsSource="{Binding FoundFiles, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ItemsControl ItemsSource="{Binding FoundFiles}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Content="{Binding Name}" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}" />
+                                        <Button Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ImageIcon Source="{Binding Info.IconLink}" />
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </StackPanel>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
