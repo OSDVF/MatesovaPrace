@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Windows.ApplicationModel.Activation;
 using File = Google.Apis.Drive.v3.Data.File;
 
 namespace MatesovaPrace.Models
@@ -15,6 +15,7 @@ namespace MatesovaPrace.Models
     internal class LoginModel : INotifyPropertyChanged
     {
         private FileListModel? selectedFile;
+        private bool searching;
 
         public string? SheetId { get; set; }
         public string FindString { get; set; } = "";
@@ -26,7 +27,7 @@ namespace MatesovaPrace.Models
         {
             get => selectedFile; set
             {
-                if(selectedFile != value)
+                if (selectedFile != value)
                 {
                     selectedFile = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedFile)));
@@ -36,6 +37,18 @@ namespace MatesovaPrace.Models
         }
         public Visibility SelectedFileInfoVisible => SelectedFile == null ? Visibility.Collapsed : Visibility.Visible;
 
+        public bool Searching
+        {
+            get => searching; internal set
+            {
+                if (searching != value)
+                {
+                    searching = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Searching)));
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 
@@ -44,6 +57,6 @@ namespace MatesovaPrace.Models
         public string? Name { get; set; }
         public string? Id { get; set; }
 
-        public File? Info { get; set; }
+        public string? Mime { get; set; }
     }
 }

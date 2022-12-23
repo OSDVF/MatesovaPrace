@@ -26,7 +26,10 @@
             <StackPanel Padding="5">
                 <TextBlock Text="Find a sheet from google drive." />
                 <local:Entry Text="{Binding FindString}" Confirmed="Search_Click" />
-                <Button Content="Find" Click="Search_Click"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Find" Click="Search_Click" Margin="0,0,8,0"/>
+                    <ProgressRing Visibility="{Binding Searching, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
                 <CheckBox Content="Include files from shared drives" IsChecked="{Binding IncludeSharedFiles}"/>
 
                 <TextBlock Text="Or enter sheet ID manually." />
@@ -40,9 +43,9 @@
                             <ItemsControl ItemsSource="{Binding FoundFiles}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
+                                        <Button BorderThickness="0" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
                                             <StackPanel Orientation="Horizontal">
-                                                <ImageIcon Source="{Binding Info.IconLink}" />
+                                                <SymbolIcon Margin="0,0,8,0" Symbol="{Binding Mime, Converter={StaticResource MimeToIconConverter}}" />
                                                 <TextBlock Text="{Binding Name}"/>
                                             </StackPanel>
                                         </Button>
@@ -56,9 +59,9 @@
                     <TwoPaneView.Pane2>
                         <!--Information about selected file-->
                         <StackPanel Visibility="{Binding SelectedFileInfoVisible}">
+                            <SymbolIcon Symbol="{Binding SelectedFile.Mime, Converter={StaticResource MimeToIconConverter}}" />
                             <TextBlock Text="{Binding SelectedFile.Name}" FontSize="16" />
-                            <TextBlock Text="{Binding SelectedFile.Id}" Foreground="Gray" />
-                            <Image Source="{Binding SelectedFile.Info.IconLink}"/>
+                            <TextBox IsReadOnly="True" Text="{Binding SelectedFile.Id}" Foreground="Gray" />
                         </StackPanel>
                     </TwoPaneView.Pane2>
                 </TwoPaneView>

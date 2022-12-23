@@ -284,12 +284,13 @@ namespace MatesovaPrace
             {
                 Id = file.Id,
                 Name = file.Name,
-                Info = file
+                Mime = file.MimeType
             };
         }
 
         async void SearchFiles(bool morePages = false)
         {
+            _data.Searching = true;
             var listRequest = drive.Files.List();
             listRequest.IncludeItemsFromAllDrives = _data.IncludeSharedFiles;
             listRequest.Q = _data.FindString;
@@ -309,8 +310,9 @@ namespace MatesovaPrace
                     _data.FoundFiles.Add(foundFile);
                 }
                 _data.NextPageToken = fileList.NextPageToken;
+                _data.Searching = false;
             }
-            catch(HttpRequestException e)
+            catch (HttpRequestException e)
             {
                 await new ContentDialog
                 {
@@ -319,8 +321,9 @@ namespace MatesovaPrace
                     XamlRoot = XamlRoot,
                     CloseButtonText = "Dismiss"
                 }.ShowAsync();
+                _data.Searching = false;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 await new ContentDialog
                 {
@@ -329,6 +332,7 @@ namespace MatesovaPrace
                     XamlRoot = XamlRoot,
                     CloseButtonText = "Dismiss"
                 }.ShowAsync();
+                _data.Searching = false;
             }
         }
 
