@@ -184,19 +184,35 @@ namespace MatesovaPrace
             }
         }
 
-        private async void Manual_Click(object sender, RoutedEventArgs e)
+        private async void Manual_Click(object sender, RoutedEventArgs _e)
         {
             await GDriveAuth();
             if (drive != null)
             {
-                var fileInfo = await drive.Files.Get(_data.SheetId).ExecuteAsync();
+                var request = drive.Files.Get(_data.SheetId);
+                request.SupportsAllDrives = true;
+                Google.Apis.Drive.v3.Data.File? fileInfo = null;
+                Exception? ex = null;
+                try
+                {
+                    fileInfo = await request.ExecuteAsync();
+                }
+                catch(Exception e)
+                {
+                    ex = e;
+                }
                 if (fileInfo == null)
                 {
-                    await (new ContentDialog
+                    var dialog = new ContentDialog
                     {
                         Title = "Not found",
-                        Content = $"File {_data.SheetId} not found"
-                    }).ShowAsync();
+                        Content = $"File {_data.SheetId} not found.",
+                        XamlRoot = XamlRoot
+                    };
+                    if(ex != null)
+                    {
+                        (dialog.Content) += $"\nAn error occured: ${ex}";
+                    }
                 }
                 else
                 {
@@ -208,7 +224,8 @@ namespace MatesovaPrace
                 await (new ContentDialog
                 {
                     Title = "Not connected",
-                    Content = "Connect to Google Drive first"
+                    Content = "Connect to Google Drive first",
+                    XamlRoot = XamlRoot
                 }).ShowAsync();
             }
         }
@@ -377,7 +394,12 @@ namespace MatesovaPrace
                 _data.DetailLoading = false;
                 if (await futureDialog == ContentDialogResult.Primary)
                 {
-
+                    OnConnected(new ConnectionModel
+                    {
+                        Credential = Credential,
+                        SheetId = _data.SheetId
+                    });
+                    Frame.GoBack();
                 }
             }
             catch (Exception e)

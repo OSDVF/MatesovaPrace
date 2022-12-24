@@ -36,7 +36,7 @@
                 <CheckBox Content="Include files from shared drives" IsChecked="{Binding IncludeSharedFiles}"/>
 
                 <TextBlock Text="Or enter sheet ID manually." />
-                <local:Entry Text="{Binding SheetId}" Confirmed="Manual_Click"/>
+                <local:Entry Text="{Binding SheetId, Mode=TwoWay}" Confirmed="Manual_Click"/>
                 <Button Content="Connect to sheet" Click="Manual_Click"/>
 
                 <!--Display list of searched files-->
