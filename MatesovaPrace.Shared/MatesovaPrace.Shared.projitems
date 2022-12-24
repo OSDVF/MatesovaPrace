@@ -18,7 +18,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)FileDetailView.xaml.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\BooleanToVisibility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIUtils\ByteArrayToImageSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoginPage.xaml.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MainPage.xaml.cs">
@@ -31,11 +33,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)Models\PersonModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Models\UserCircleModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\MimeToIcon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIUtils\StringFormatConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UserCircle.xaml.cs" />
     <Compile Include="..\MatesovaPrace.Shared\UWPObjectStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="$(MSBuildThisFileDirectory)FileDetailView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="$(MSBuildThisFileDirectory)LoginPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

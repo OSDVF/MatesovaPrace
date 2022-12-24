@@ -10,8 +10,12 @@
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance Type=models:LoginModel, IsDesignTimeCreatable=True}"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-    <StackPanel>
-        <CommandBar x:Name="AppBar"  HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <CommandBar x:Name="AppBar" Grid.Row="0" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
             <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
             <AppBarElementContainer>
                 <local:UserCircle Credential="{Binding Credential, ElementName=LoginPageElement, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -21,8 +25,7 @@
             </AppBarElementContainer>
         </CommandBar>
 
-
-        <ScrollViewer>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1">
             <StackPanel Padding="5">
                 <TextBlock Text="Find a sheet from google drive." />
                 <local:Entry Text="{Binding FindString}" Confirmed="Search_Click" />
@@ -36,36 +39,21 @@
                 <local:Entry Text="{Binding SheetId}" Confirmed="Manual_Click"/>
                 <Button Content="Connect to sheet" Click="Manual_Click"/>
 
-                <TwoPaneView PanePriority="Pane1" TallModeConfiguration="TopBottom" WideModeConfiguration="LeftRight">
-                    <TwoPaneView.Pane1>
-                        <StackPanel>
-                            <!--Display list of searched files-->
-                            <ItemsControl ItemsSource="{Binding FoundFiles}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button BorderThickness="0" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <SymbolIcon Margin="0,0,8,0" Symbol="{Binding Mime, Converter={StaticResource MimeToIconConverter}}" />
-                                                <TextBlock Text="{Binding Name}"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Button Content="﹀" BorderThickness="0" Visibility="{Binding NextPageVisible, ElementName=LoginPageElement}" Click="NextPage_Click" />
-                        </StackPanel>
-                    </TwoPaneView.Pane1>
-
-                    <TwoPaneView.Pane2>
-                        <!--Information about selected file-->
-                        <StackPanel Visibility="{Binding SelectedFileInfoVisible}">
-                            <SymbolIcon Symbol="{Binding SelectedFile.Mime, Converter={StaticResource MimeToIconConverter}}" />
-                            <TextBlock Text="{Binding SelectedFile.Name}" FontSize="16" />
-                            <TextBox IsReadOnly="True" Text="{Binding SelectedFile.Id}" Foreground="Gray" />
-                        </StackPanel>
-                    </TwoPaneView.Pane2>
-                </TwoPaneView>
+                <!--Display list of searched files-->
+                <ItemsControl ItemsSource="{Binding FoundFiles}" Margin="0,8,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button BorderThickness="0" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <SymbolIcon Margin="0,0,8,0" Symbol="{Binding Mime, Converter={StaticResource MimeToIconConverter}}" />
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="﹀" BorderThickness="0" Visibility="{Binding NextPageVisible, ElementName=LoginPageElement}" Click="NextPage_Click" />
             </StackPanel>
         </ScrollViewer>
-    </StackPanel>
+    </Grid>
 </Page>

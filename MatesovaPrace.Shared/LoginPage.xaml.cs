@@ -24,6 +24,11 @@ using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Auth.OAuth2.Responses;
 using System.Net.Sockets;
+using Microsoft.Extensions.FileProviders;
+using ABI.Windows.Devices.Scanners;
+using Windows.Graphics.Imaging;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -52,6 +57,7 @@ namespace MatesovaPrace
         private GoogleClientSecrets gClient;
         internal Action<ConnectionModel>? OnConnected { get; set; }
         public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
+        public FileDetailView fileDetailView;
         public LoginPage()
         {
             InitializeComponent();
@@ -64,6 +70,17 @@ namespace MatesovaPrace
             SetTitleBar();
             SizeChanged += ResetTitlebar;
 #endif
+            MarkFileAsSelected = new RelayCommand<FileListModel>(MarkFileAsSelectedCommand);
+            Loaded += LoginPage_Loaded;
+        }
+
+        private void LoginPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            fileDetailView = new FileDetailView()
+            {
+                DataContext = _data,
+                XamlRoot = XamlRoot
+            };
         }
 
         private void SetTitleBar()
@@ -124,9 +141,9 @@ namespace MatesovaPrace
                 ClientSecrets = gClient.Secrets,
                 DataStore = objectStorage,
                 Scopes = new[]
-                                {
-                        DriveService.Scope.Drive
-                    }
+                {
+                    DriveService.Scope.Drive
+                }
             });
         }
 
@@ -183,7 +200,7 @@ namespace MatesovaPrace
                 }
                 else
                 {
-                    _data.SelectedFile = FileToListModel(fileInfo);
+                    MarkFileAsSelectedCommand(FileToListModel(fileInfo));
                 }
             }
             else
@@ -336,10 +353,47 @@ namespace MatesovaPrace
             }
         }
 
-        public RelayCommand<FileListModel> MarkFileAsSelected { get; set; } = new RelayCommand<FileListModel>((FileListModel? file) =>
+        public RelayCommand<FileListModel> MarkFileAsSelected { get; set; }
+        async void MarkFileAsSelectedCommand(FileListModel? file)
         {
-            _data.SelectedFile = file;
-        });
+            if (file == null)
+            {
+                _data.SelectedFile = null;
+                _data.DetailLoading = false;
+                return;
+            }
+            _data.DetailLoading = true;
+            _data.SelectedFile = null;
+            try
+            {
+                var request = drive.Files.Get(file.Id);
+                BitmapImage img = new BitmapImage();
+                request.SupportsAllDrives = true;
+                request.Fields = "thumbnailLink";
+                var futureDialog = fileDetailView.ShowAsync();
+                var fileInfo = await request.ExecuteAsync();
+                var image = await drive.HttpClient.GetByteArrayAsync(fileInfo.ThumbnailLink);
+                _data.SelectedFile = new FileDetailModel(file, image);
+                _data.DetailLoading = false;
+                if (await futureDialog == ContentDialogResult.Primary)
+                {
+
+                }
+            }
+            catch (Exception e)
+            {
+                _data.DetailLoading = false;
+                fileDetailView.Hide();
+                await new ContentDialog
+                {
+                    Title = "Error Getting File Detail",
+                    Content = e.Message,
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
+                }.ShowAsync();
+            }
+
+        }
 
         void NextPage_Click(object sender, RoutedEventArgs e)
         {

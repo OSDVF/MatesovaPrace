@@ -1,0 +1,29 @@
+﻿<ContentDialog
+    x:Class="MatesovaPrace.FileDetailView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MatesovaPrace"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400"
+    PrimaryButtonText="Select This File"
+    CloseButtonText="Close">
+    <ContentDialog.Title>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <SymbolIcon Symbol="{Binding SelectedFile.Mime, FallbackValue=Sync, Converter={StaticResource MimeToIconConverter}}" Margin="0,0,8,0" />
+            <TextBlock Text="{Binding SelectedFile.Name, FallbackValue='Loading'}"/>
+        </StackPanel>
+    </ContentDialog.Title>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Visibility="{Binding SelectedFileInfoVisible}">
+            <ProgressRing Visibility="{Binding DetailLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBox IsReadOnly="True" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"
+                     Text="{Binding SelectedFile.Id, Converter={StaticResource StringFormatConverter}, ConverterParameter='Id: {0}'}" Foreground="Gray" 
+                    />
+            <Image Source="{Binding SelectedFile.Thumbnail, Converter={StaticResource ByteArrayToImageSourceConverter}}" Stretch="None"/>
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>
