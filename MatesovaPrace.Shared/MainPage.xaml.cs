@@ -29,7 +29,6 @@ namespace MatesovaPrace
         AccommodationPageModel model = new();
         private App? app;
         public bool HideUnlogged { get; set; } = false;
-        public Visibility GridVisibility => model.Connection != null ? Visibility.Visible : Visibility.Collapsed;
 
         public MainPage()
         {

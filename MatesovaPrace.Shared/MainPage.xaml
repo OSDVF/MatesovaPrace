@@ -20,7 +20,8 @@
                     <StackPanel>
                         <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
                         <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
-                        <TextBlock Visibility="{x:Bind GridVisibility}" Text="Matesova Práce" FontSize="18" Margin="12,8" />
+                        <TextBlock Visibility="{Binding Connection, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                   Text="Matesova Práce" FontSize="18" Margin="12,8" />
                     </StackPanel>
                 </AppBarElementContainer>
             </CommandBar>
@@ -38,7 +39,7 @@
         <StackPanel Visibility="{Binding AutoAuthVisibility}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Visibility="{x:Bind GridVisibility}">
+        <StackPanel Orientation="Horizontal" Visibility="{Binding Connection, Converter={StaticResource BooleanToVisibilityConverter}}">
             <CheckBox Content="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
         </StackPanel>
         <!--Grid of accommodated people-->

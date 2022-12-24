@@ -12,6 +12,7 @@ namespace MatesovaPrace.Models
     {
         private bool foundAuthCode = false;
         private string manualAuthCode;
+        private ConnectionModel? connection;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public bool FoundAuthCode
@@ -30,7 +31,18 @@ namespace MatesovaPrace.Models
         public Visibility AutoAuthVisibility => FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
         public Visibility LoginRequestVisible => Connection == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
 
-        public ConnectionModel? Connection { get; set; }
+        public ConnectionModel? Connection
+        {
+            get => connection; set
+            {
+                if(connection != value)
+                {
+                    connection = value;
+                    PropertyChanged?.Invoke(this, new(nameof(Connection)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LoginRequestVisible)));
+                }
+            }
+        }
         public ObservableCollection<PersonModel> People { get; set; } = new();
         public string ManualAuthCode
         {
