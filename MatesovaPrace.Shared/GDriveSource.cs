@@ -34,11 +34,11 @@ namespace MatesovaPrace
             int index = 0;
             foreach (var row in result.Values)
             {
-                if(excludeUnlogged && row[0] as string == "Z")
+                if (excludeUnlogged && row[0] as string == "Z")
                 {
                     continue;
                 }
-                var additionalItems = (row[19] as string)?.Split(",");
+                var additionalItems = (row[19] as string)?.Split(",", StringSplitOptions.TrimEntries);
                 Status status;
                 var statusKnown = Enum.TryParse<Status>(row[20] as string, out status);
                 try

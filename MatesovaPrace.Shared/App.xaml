@@ -17,6 +17,8 @@
             <local:BooleanToVisibility x:Key="BooleanToVisibilityConverter"/>
             <local:StringFormatConverter x:Key="StringFormatConverter" />
             <local:ByteArrayToImageSource x:Key="ByteArrayToImageSourceConverter" />
+            <local:StringListConverter x:Key="StringListConverter" />
+            <local:CompactPhoneNumber x:Key="CompactProheNumberConverter" />
         </ResourceDictionary>
     </Application.Resources>
 

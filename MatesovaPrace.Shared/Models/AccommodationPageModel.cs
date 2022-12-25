@@ -17,14 +17,14 @@ namespace MatesovaPrace.Models
         private ObservableCollection<PersonModel> people = new();
         private ObservableCollection<float> columnWidths = new() {
             20.0f,
-            80.0f,
+            70.0f,
             80.0f,
             20.0f,
-            150.0f,
-            100.0f,
+            190.0f,
+            80.0f,
             90.0f,
-            80.0f,
-            80.0f,
+            72.0f,
+            72.0f,
             100.0f,
             50.0f,
         };

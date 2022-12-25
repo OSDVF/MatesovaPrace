@@ -47,11 +47,11 @@
                         <TextBlock Text="{Binding Surname}" Width="{Binding DataContext.ColumnWidths[2], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding BirthYear}" Width="{Binding DataContext.ColumnWidths[3], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding Email}" Width="{Binding DataContext.ColumnWidths[4], ElementName=MainPageElement}"/>
-                        <TextBlock Text="{Binding Phone}" Width="{Binding DataContext.ColumnWidths[5], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding Phone, Converter={StaticResource CompactProheNumberConverter}}" Width="{Binding DataContext.ColumnWidths[5], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding City}" Width="{Binding DataContext.ColumnWidths[6], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding ArrivalString}" Width="{Binding DataContext.ColumnWidths[7], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding DepartureString}" Width="{Binding DataContext.ColumnWidths[8], ElementName=MainPageElement}"/>
-                        <TextBlock Text="{Binding AdditionalItems}" Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding AdditionalItems, Converter={StaticResource StringListConverter}, ConverterParameter=','}" Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding TotalPrice}" Width="{Binding DataContext.ColumnWidths[10], ElementName=MainPageElement}"/>
                     </StackPanel>
                 </DataTemplate>
