@@ -27,20 +27,24 @@ namespace MatesovaPrace
             });
         }
 
-        public async Task<ObservableCollection<PersonModel>> GetPeopleAsync()
+        public async Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true)
         {
             ObservableCollection<PersonModel> people = new();
             var result = await Service.Spreadsheets.Values.Get(SheetId, "A2:Z60").ExecuteAsync();
             int index = 0;
             foreach (var row in result.Values)
             {
+                if(excludeUnlogged && row[0] as string == "Z")
+                {
+                    continue;
+                }
                 var additionalItems = (row[19] as string)?.Split(",");
                 Status status;
                 var statusKnown = Enum.TryParse<Status>(row[20] as string, out status);
                 try
                 {
                     people.Add(new PersonModel(
-                       row[0] as int? ?? -1,
+                       row[0] as string,
                         row[1] as string,
                       row[2] as string,
                     uint.Parse(row[3] as string),

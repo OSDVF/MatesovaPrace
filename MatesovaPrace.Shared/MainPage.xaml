@@ -17,25 +17,47 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        
-        <StackPanel Orientation="Horizontal" Grid.Row="0">
-            <local:UserCircle Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
-            <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left">
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <local:UserCircle Grid.Column="0" Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
+            <CommandBar Grid.Column="1" HorizontalAlignment="Left">
                 <AppBarElementContainer>
-                    <StackPanel>
-                        <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
-                        <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
-                        <TextBlock Visibility="{Binding DataSource, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                   Text="Matesova Práce" FontSize="18" Margin="12,10,0,0" />
-                    </StackPanel>
+                    <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="12,10,0,0" />
                 </AppBarElementContainer>
                 <CommandBar.SecondaryCommands>
-                    <AppBarToggleButton Content="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
-                    <AppBarButton Content="Reload" Click="Reload_Click" />
-                    <AppBarButton Content="Select Different Sheet" Click="ShowLoginPage_Click" />
+                    <AppBarToggleButton Label="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
+                    <AppBarButton Label="Reload" Click="Reload_Click" />
+                    <AppBarButton Label="Select Different Sheet" Click="ShowLoginPage_Click" />
                 </CommandBar.SecondaryCommands>
             </CommandBar>
-        </StackPanel>
+            <Rectangle Grid.Column="2" x:Name="MainAppBar" />
+        </Grid>
+        <!--Grid of accommodated people-->
+        <ListView  Grid.Row="1" ItemsSource="{Binding People}" >
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Height="20">
+                        <TextBlock Text="{Binding Order}" Width="{Binding DataContext.ColumnWidths[0], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding Name}" Width="{Binding DataContext.ColumnWidths[1], ElementName=MainPageElement}" />
+                        <TextBlock Text="{Binding Surname}" Width="{Binding DataContext.ColumnWidths[2], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding BirthYear}" Width="{Binding DataContext.ColumnWidths[3], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding Email}" Width="{Binding DataContext.ColumnWidths[4], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding Phone}" Width="{Binding DataContext.ColumnWidths[5], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding City}" Width="{Binding DataContext.ColumnWidths[6], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding ArrivalString}" Width="{Binding DataContext.ColumnWidths[7], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding DepartureString}" Width="{Binding DataContext.ColumnWidths[8], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding AdditionalItems}" Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
+                        <TextBlock Text="{Binding TotalPrice}" Width="{Binding DataContext.ColumnWidths[10], ElementName=MainPageElement}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
         <StackPanel Grid.Row="1" Visibility="{Binding LoginRequestVisible}" Margin="20">
             <Button Content="Select Google Sheet" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
@@ -46,27 +68,8 @@
                 </StackPanel>
             </Expander>
         </StackPanel>
-        <StackPanel Grid.Row="1" Visibility="{Binding AutoAuthVisibility}" Margin="20">
+        <StackPanel Grid.Row="1" Visibility="{Binding FoundAuthCode, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Visibility="{Binding DataSource, Converter={StaticResource BooleanToVisibilityConverter}}">
-            
-        </StackPanel>
-        <!--Grid of accommodated people-->
-        <ListView  Grid.Row="1" ItemsSource="{Binding People}" >
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Height="20">
-
-                        <TextBlock Text="{Binding Name}" />
-                        <Rectangle Stroke="Black" StrokeThickness="0.5" Width="1"/>
-
-                        <TextBlock Text="{Binding Surname}" />
-                        <Rectangle Stroke="Black" StrokeThickness="0.5" Width="1"/>
-
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
     </Grid>
 </Page>

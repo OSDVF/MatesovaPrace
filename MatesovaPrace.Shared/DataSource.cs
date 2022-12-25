@@ -9,6 +9,6 @@ namespace MatesovaPrace
 {
     interface IDataSource
     {
-        public abstract Task<ObservableCollection<PersonModel>> GetPeopleAsync();
+        public abstract Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true);
     }
 }

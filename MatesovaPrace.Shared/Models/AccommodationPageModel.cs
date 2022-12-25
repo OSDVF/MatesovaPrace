@@ -15,6 +15,19 @@ namespace MatesovaPrace.Models
         private IDataSource? dataSource;
         private bool peopleLoading;
         private ObservableCollection<PersonModel> people = new();
+        private ObservableCollection<float> columnWidths = new() {
+            20.0f,
+            80.0f,
+            80.0f,
+            20.0f,
+            150.0f,
+            100.0f,
+            90.0f,
+            80.0f,
+            80.0f,
+            100.0f,
+            50.0f,
+        };
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public bool FoundAuthCode
@@ -25,12 +38,11 @@ namespace MatesovaPrace.Models
                 {
                     foundAuthCode = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FoundAuthCode)));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AutoAuthVisibility)));
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LoginRequestVisible)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TitleText)));
                 }
             }
         }
-        public Visibility AutoAuthVisibility => FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
         public Visibility LoginRequestVisible => DataSource == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
 
         public IDataSource? DataSource
@@ -42,6 +54,7 @@ namespace MatesovaPrace.Models
                     dataSource = value;
                     PropertyChanged?.Invoke(this, new(nameof(DataSource)));
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LoginRequestVisible)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TitleText)));
                 }
             }
         }
@@ -49,7 +62,7 @@ namespace MatesovaPrace.Models
         {
             get => people; set
             {
-                if(people != value)
+                if (people != value)
                 {
                     people = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(People)));
@@ -73,7 +86,40 @@ namespace MatesovaPrace.Models
                 {
                     peopleLoading = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PeopleLoading)));
+                }
+            }
+        }
 
+        public ObservableCollection<float> ColumnWidths
+        {
+            get => columnWidths; set
+            {
+                if (columnWidths != value)
+                {
+                    columnWidths = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ColumnWidths)));
+                }
+            }
+        }
+
+        public string TitleText
+        {
+            get
+            {
+                if (DataSource == null)
+                {
+                    if (FoundAuthCode)
+                    {
+                        return "Google Drive access granted";
+                    }
+                    else
+                    {
+                        return "Connect to Google Drive first";
+                    }
+                }
+                else
+                {
+                    return "Matesova Práce";
                 }
             }
         }

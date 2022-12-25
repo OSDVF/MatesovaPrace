@@ -28,7 +28,7 @@ namespace MatesovaPrace
     {
         AccommodationPageModel model = new();
         private App? app;
-        public bool HideUnlogged { get; set; } = false;
+        public bool HideUnlogged { get; set; } = true;
 
         public MainPage()
         {
@@ -38,7 +38,6 @@ namespace MatesovaPrace
 
 #if WINDOWS
             app = (Application.Current as App);
-            app?.MainWindow.SetTitleBar(MainAppBar);
             SizeChanged += ResetTitlebar;
 #endif
         }
@@ -46,6 +45,12 @@ namespace MatesovaPrace
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             SizeChanged -= ResetTitlebar;
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            ResetTitlebar(null, null);
+            SizeChanged += ResetTitlebar;
         }
 
         void ResetTitlebar(object sender, SizeChangedEventArgs e)
@@ -82,7 +87,7 @@ namespace MatesovaPrace
             model.PeopleLoading = true;
             try
             {
-                model.People = await model.DataSource.GetPeopleAsync();
+                model.People = await model.DataSource.GetPeopleAsync(HideUnlogged);
             }
             catch (Exception e)
             {

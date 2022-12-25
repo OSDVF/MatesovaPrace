@@ -17,7 +17,7 @@ namespace MatesovaPrace.Models
     }
     class PersonModel
     {
-        public PersonModel(int order, string name, string surname, uint birthYear, string email, string phone, string city, string instrument, bool firstTime, string? whoInvited, string? health, string? food, string? note, string type, DateTime arrival, Meal firstMeal, DateTime departure, Meal lastMeal, string[]? additionalItems, Status status, float nightPrice, float totalPrice, string? internalNote, DateTime signupDate, float extraItemsPrice)
+        public PersonModel(string order, string name, string surname, uint birthYear, string email, string phone, string city, string instrument, bool firstTime, string? whoInvited, string? health, string? food, string? note, string type, DateTime arrival, Meal firstMeal, DateTime departure, Meal lastMeal, string[]? additionalItems, Status status, float nightPrice, float totalPrice, string? internalNote, DateTime signupDate, float extraItemsPrice)
         {
             Order = order;
             Name = name;
@@ -46,7 +46,7 @@ namespace MatesovaPrace.Models
             ExtraItemsPrice = extraItemsPrice;
         }
 
-        public int Order { get; set; }
+        public string Order { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
         public uint BirthYear { get; set; }
@@ -61,6 +61,20 @@ namespace MatesovaPrace.Models
         public string? Note { get; set; }
         public string Type { get; set; }
         public DateTime Arrival { get; set; }
+        public string ArrivalString
+        {
+            get
+            {
+                return Arrival.ToString("yyyy.MM.dd");
+            }
+        }
+        public string DepartureString
+        {
+            get
+            {
+                return Departure.ToString("yyyy.MM.dd");
+            }
+        }
         public Meal FirstMeal { get; set; }
         public DateTime Departure { get; set; }
         public Meal LastMeal { get; set; }
