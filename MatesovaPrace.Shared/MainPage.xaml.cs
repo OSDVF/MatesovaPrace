@@ -93,7 +93,7 @@ namespace MatesovaPrace
             {
                 await new ContentDialog
                 {
-                    Title = "Error Getting Accomodation Data",
+                    Title = "Error Getting Accommodation Data",
                     Content = e.Message,
                     XamlRoot = XamlRoot,
                     CloseButtonText = "Dismiss"
@@ -105,6 +105,11 @@ namespace MatesovaPrace
         private void Reload_Click(object sender, RoutedEventArgs e)
         {
             OnLoggedIn(model.DataSource);
+        }
+
+        private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+
         }
     }
 }
