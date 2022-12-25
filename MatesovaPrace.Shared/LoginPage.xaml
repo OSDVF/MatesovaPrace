@@ -21,7 +21,7 @@
                 <local:UserCircle Credential="{Binding Credential, ElementName=LoginPageElement, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </AppBarElementContainer>
             <AppBarElementContainer>
-                <TextBlock Text="Select Google Sheet" FontSize="18" Margin="12,8"/>
+                <TextBlock Text="Select Google Sheet" FontSize="18" Margin="12,10,0,0"/>
             </AppBarElementContainer>
         </CommandBar>
 
@@ -43,7 +43,7 @@
                 <ItemsControl ItemsSource="{Binding FoundFiles}" Margin="0,8,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button BorderThickness="0" Command="{Binding MarkFileAsSelected, ElementName=LoginPageElement}" CommandParameter="{Binding}">
+                            <Button BorderThickness="0" Command="{Binding ShowFileSelectDialog, ElementName=LoginPageElement}" CommandParameter="{Binding}">
                                 <StackPanel Orientation="Horizontal">
                                     <SymbolIcon Margin="0,0,8,0" Symbol="{Binding Mime, Converter={StaticResource MimeToIconConverter}}" />
                                     <TextBlock Text="{Binding Name}"/>

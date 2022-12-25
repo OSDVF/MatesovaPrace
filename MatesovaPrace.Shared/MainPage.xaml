@@ -12,21 +12,31 @@
     Loaded="Load"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <local:UserCircle Margin="5,0,0,0" Credential="{Binding Connection.Credential, Mode=TwoWay}" />
-            <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left" OverflowButtonVisibility="Collapsed">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <StackPanel Orientation="Horizontal" Grid.Row="0">
+            <local:UserCircle Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
+            <CommandBar x:Name="MainAppBar" HorizontalAlignment="Left">
                 <AppBarElementContainer>
                     <StackPanel>
                         <TextBlock Visibility="{Binding LoginRequestVisible}" Text="Connect to Google Drive first" FontSize="18" Margin="12,8"/>
                         <TextBlock Visibility="{Binding AutoAuthVisibility}" Text="Google Drive access granted" FontSize="18" Margin="12,8"/>
-                        <TextBlock Visibility="{Binding Connection, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                   Text="Matesova Práce" FontSize="18" Margin="12,8" />
+                        <TextBlock Visibility="{Binding DataSource, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                   Text="Matesova Práce" FontSize="18" Margin="12,10,0,0" />
                     </StackPanel>
                 </AppBarElementContainer>
+                <CommandBar.SecondaryCommands>
+                    <AppBarToggleButton Content="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
+                    <AppBarButton Content="Reload" Click="Reload_Click" />
+                    <AppBarButton Content="Select Different Sheet" Click="ShowLoginPage_Click" />
+                </CommandBar.SecondaryCommands>
             </CommandBar>
         </StackPanel>
-        <StackPanel Visibility="{Binding LoginRequestVisible}" Margin="20">
+        <StackPanel Grid.Row="1" Visibility="{Binding LoginRequestVisible}" Margin="20">
             <Button Content="Select Google Sheet" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
                 <StackPanel>
@@ -36,35 +46,27 @@
                 </StackPanel>
             </Expander>
         </StackPanel>
-        <StackPanel Visibility="{Binding AutoAuthVisibility}" Margin="20">
+        <StackPanel Grid.Row="1" Visibility="{Binding AutoAuthVisibility}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Visibility="{Binding Connection, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <CheckBox Content="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Visibility="{Binding DataSource, Converter={StaticResource BooleanToVisibilityConverter}}">
+            
         </StackPanel>
         <!--Grid of accommodated people-->
-        <ItemsControl ItemsSource="{Binding People}">
-            <ItemsControl.ItemTemplate>
+        <ListView  Grid.Row="1" ItemsSource="{Binding People}" >
+            <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Height="20">
-                        <StackPanel.Resources>
-                            <Style TargetType="Line" x:Key="SeparatorStyle">
-                                <Setter Property="X1" Value="0" />
-                                <Setter Property="X2" Value="0" />
-                                <Setter Property="Y1" Value="0" />
 
-                                <Setter Property="Stroke" Value="Gray" />
-                            </Style>
-                        </StackPanel.Resources>
+                        <TextBlock Text="{Binding Name}" />
+                        <Rectangle Stroke="Black" StrokeThickness="0.5" Width="1"/>
 
-                        <TextBox Text="{Binding Name}" />
-                        <Line Style="{StaticResource SeparatorStyle}"/>
+                        <TextBlock Text="{Binding Surname}" />
+                        <Rectangle Stroke="Black" StrokeThickness="0.5" Width="1"/>
 
-                        <TextBox Text="{Binding Surname}" />
-                        <Line Style="{StaticResource SeparatorStyle}"/>
                     </StackPanel>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
 </Page>

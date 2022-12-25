@@ -24,8 +24,6 @@ using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Auth.OAuth2.Responses;
 using System.Net.Sockets;
-using Microsoft.Extensions.FileProviders;
-using ABI.Windows.Devices.Scanners;
 using Windows.Graphics.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -55,7 +53,7 @@ namespace MatesovaPrace
         private UWPObjectStorage objectStorage = new();
         private App? app;
         private GoogleClientSecrets gClient;
-        internal Action<ConnectionModel>? OnConnected { get; set; }
+        internal Action<IDataSource>? OnConnected { get; set; }
         public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
         public FileDetailView fileDetailView;
         public LoginPage()
@@ -70,7 +68,7 @@ namespace MatesovaPrace
             SetTitleBar();
             SizeChanged += ResetTitlebar;
 #endif
-            MarkFileAsSelected = new RelayCommand<FileListModel>(MarkFileAsSelectedCommand);
+            ShowFileSelectDialog = new RelayCommand<FileListModel>(SelectFileDialog);
             Loaded += LoginPage_Loaded;
         }
 
@@ -100,7 +98,7 @@ namespace MatesovaPrace
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter is Tuple<Action<ConnectionModel>, string> connectedAndAuth)
+            if (e.Parameter is Tuple<Action<IDataSource>, string> connectedAndAuth)
             {
                 OnConnected = connectedAndAuth.Item1;
                 // Exchange code for an access token
@@ -121,7 +119,7 @@ namespace MatesovaPrace
             }
             else
             {
-                if (e.Parameter is Action<ConnectionModel> connected)
+                if (e.Parameter is Action<IDataSource> connected)
                 {
                     OnConnected = connected;
                 }
@@ -142,7 +140,8 @@ namespace MatesovaPrace
                 DataStore = objectStorage,
                 Scopes = new[]
                 {
-                    DriveService.Scope.Drive
+                    DriveService.Scope.Drive,
+                    SheetsService.Scope.Spreadsheets
                 }
             });
         }
@@ -216,7 +215,7 @@ namespace MatesovaPrace
                 }
                 else
                 {
-                    MarkFileAsSelectedCommand(FileToListModel(fileInfo));
+                    SelectFileDialog(FileToListModel(fileInfo));
                 }
             }
             else
@@ -237,7 +236,7 @@ namespace MatesovaPrace
                 Console.WriteLine("Already authenticated");
                 return;
             }
-            var token = objectStorage.Get<TokenResponse>();
+            var token = await objectStorage.GetAsync<TokenResponse>("TokenResponse");
             if (token == null)
             {
 #if __WASM__
@@ -259,7 +258,6 @@ namespace MatesovaPrace
                 Credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     gClient.Secrets,
                     new[] {
-                        SheetsService.Scope.Spreadsheets,
                         DriveService.Scope.Drive
                     },
                     "user", CancellationToken.None, objectStorage, receiver);
@@ -370,8 +368,8 @@ namespace MatesovaPrace
             }
         }
 
-        public RelayCommand<FileListModel> MarkFileAsSelected { get; set; }
-        async void MarkFileAsSelectedCommand(FileListModel? file)
+        public RelayCommand<FileListModel> ShowFileSelectDialog { get; set; }
+        async void SelectFileDialog(FileListModel? file)
         {
             if (file == null)
             {
@@ -394,12 +392,25 @@ namespace MatesovaPrace
                 _data.DetailLoading = false;
                 if (await futureDialog == ContentDialogResult.Primary)
                 {
-                    OnConnected(new ConnectionModel
+                    if(OnConnected == null)
                     {
-                        Credential = Credential,
-                        SheetId = _data.SheetId
-                    });
-                    Frame.GoBack();
+                        fileDetailView.Hide();
+                        await new ContentDialog
+                        {
+                            Title = "Not Connected",
+                            Content = "Google Drive Service is not connected",
+                            XamlRoot = XamlRoot,
+                            CloseButtonText = "Dismiss"
+                        }.ShowAsync();
+                    }
+                    else
+                    {
+                        OnConnected(new GDriveSource(Credential)
+                        {
+                            SheetId = file.Id,
+                        });
+                        Frame.GoBack();
+                    }
                 }
             }
             catch (Exception e)
@@ -409,7 +420,7 @@ namespace MatesovaPrace
                 await new ContentDialog
                 {
                     Title = "Error Getting File Detail",
-                    Content = e.Message,
+                    Content = e.InnerException is null ? e.Message : e.Message + e.InnerException.Message,
                     XamlRoot = XamlRoot,
                     CloseButtonText = "Dismiss"
                 }.ShowAsync();

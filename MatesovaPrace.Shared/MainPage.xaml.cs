@@ -68,20 +68,38 @@ namespace MatesovaPrace
 
         private void ShowLoginPage_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(LoginPage), (Action<ConnectionModel>)OnLoggedIn);
+            Frame.Navigate(typeof(LoginPage), (Action<IDataSource>)OnLoggedIn);
         }
 
         void ManualAuth_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(LoginPage), new Tuple<Action<ConnectionModel>, string>(OnLoggedIn, model.ManualAuthCode));
+            Frame.Navigate(typeof(LoginPage), new Tuple<Action<IDataSource>, string>(OnLoggedIn, model.ManualAuthCode));
         }
 
-        void OnLoggedIn(ConnectionModel newConnection)
+        async void OnLoggedIn(IDataSource newConnection)
         {
-            Console.WriteLine("Loggedd");
+            model.DataSource = newConnection;
+            model.PeopleLoading = true;
+            try
+            {
+                model.People = await model.DataSource.GetPeopleAsync();
+            }
+            catch (Exception e)
+            {
+                await new ContentDialog
+                {
+                    Title = "Error Getting Accomodation Data",
+                    Content = e.Message,
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
+                }.ShowAsync();
+            }
+            model.PeopleLoading = false;
+        }
 
-            model.Connection = newConnection;
-
+        private void Reload_Click(object sender, RoutedEventArgs e)
+        {
+            OnLoggedIn(model.DataSource);
         }
     }
 }

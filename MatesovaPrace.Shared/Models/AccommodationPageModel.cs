@@ -12,7 +12,9 @@ namespace MatesovaPrace.Models
     {
         private bool foundAuthCode = false;
         private string manualAuthCode;
-        private ConnectionModel? connection;
+        private IDataSource? dataSource;
+        private bool peopleLoading;
+        private ObservableCollection<PersonModel> people = new();
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public bool FoundAuthCode
@@ -29,28 +31,50 @@ namespace MatesovaPrace.Models
             }
         }
         public Visibility AutoAuthVisibility => FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
-        public Visibility LoginRequestVisible => Connection == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility LoginRequestVisible => DataSource == null && !FoundAuthCode ? Visibility.Visible : Visibility.Collapsed;
 
-        public ConnectionModel? Connection
+        public IDataSource? DataSource
         {
-            get => connection; set
+            get => dataSource; set
             {
-                if(connection != value)
+                if (dataSource != value)
                 {
-                    connection = value;
-                    PropertyChanged?.Invoke(this, new(nameof(Connection)));
+                    dataSource = value;
+                    PropertyChanged?.Invoke(this, new(nameof(DataSource)));
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LoginRequestVisible)));
                 }
             }
         }
-        public ObservableCollection<PersonModel> People { get; set; } = new();
+        public ObservableCollection<PersonModel> People
+        {
+            get => people; set
+            {
+                if(people != value)
+                {
+                    people = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(People)));
+                }
+            }
+        }
         public string ManualAuthCode
         {
             get => manualAuthCode; set
             {
                 manualAuthCode = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ManualAuthCode)));
+            }
+        }
 
+        public bool PeopleLoading
+        {
+            get => peopleLoading; set
+            {
+                if (peopleLoading != value)
+                {
+                    peopleLoading = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PeopleLoading)));
+
+                }
             }
         }
     }
