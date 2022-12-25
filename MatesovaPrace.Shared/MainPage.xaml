@@ -38,7 +38,7 @@
             <Rectangle Grid.Column="2" x:Name="MainAppBar" />
         </Grid>
         <!--Grid of accommodated people-->
-        <ListView  Grid.Row="1" ItemsSource="{Binding People}" ItemClick="ListView_ItemClick">
+        <ListView  Grid.Row="1" ItemsSource="{Binding People}" SelectionChanged="ListView_SelectionChanged">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Height="20">

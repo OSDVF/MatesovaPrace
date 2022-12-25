@@ -28,6 +28,7 @@ namespace MatesovaPrace
     {
         AccommodationPageModel model = new();
         private App? app;
+        private SignatureDialog signatureDialog;
         public bool HideUnlogged { get; set; } = true;
 
         public MainPage()
@@ -40,6 +41,15 @@ namespace MatesovaPrace
             app = (Application.Current as App);
             SizeChanged += ResetTitlebar;
 #endif
+            Loaded += MainPage_Loaded;
+        }
+
+        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            signatureDialog = new()
+            {
+                XamlRoot = XamlRoot
+            };
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -107,9 +117,12 @@ namespace MatesovaPrace
             OnLoggedIn(model.DataSource);
         }
 
-        private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            signatureDialog.DataContext = e.AddedItems[0];
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            signatureDialog.ShowAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
     }
 }

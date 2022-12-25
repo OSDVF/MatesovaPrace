@@ -65,14 +65,14 @@ namespace MatesovaPrace.Models
         {
             get
             {
-                return Arrival.ToString("yyyy.dd.MM");
+                return Arrival.ToString("dd.MM.yyyy");
             }
         }
         public string DepartureString
         {
             get
             {
-                return Departure.ToString("yyyy.dd.MM");
+                return Departure.ToString("dd.MM.yyyy");
             }
         }
         public Meal FirstMeal { get; set; }
