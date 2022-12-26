@@ -12,26 +12,30 @@
     d:DesignWidth="400"
     d:DataContext="{d:DesignInstance Type=models:PersonModel, IsDesignTimeCreatable=True}"
     CloseButtonText="Close"
-    Title="Signature">
+    Title="Signature"
+    PointerMoved="Canvas_PointerMoved" PointerCanceled="Canvas_PointerReleased" PointerReleased="Canvas_PointerReleased" PointerCaptureLost="Canvas_PointerReleased" PointerExited="Canvas_PointerReleased" PointerPressed="Canvas_PointerPressed"
+    >
 
-    <StackPanel>
-        <Grid x:Name="SignCanvas" PointerMoved="Canvas_PointerMoved" PointerReleased="Canvas_PointerReleased" PointerPressed="Canvas_PointerPressed">
-            <Rectangle Height="200" Width="400" Stroke="Black"/>
-        </Grid>
-        <Expander IsExpanded="False" Header="User Details">
-            <StackPanel>
-                <TextBlock Text="{Binding Order, Converter={StaticResource StringFormatConverter}, ConverterParameter='Number: {0}'}"/>
-                <TextBlock Text="{Binding Name, Converter={StaticResource StringFormatConverter}, ConverterParameter='Name: {0}'}" />
-                <TextBlock Text="{Binding Surname, Converter={StaticResource StringFormatConverter}, ConverterParameter='Surname: {0}'}"/>
-                <TextBlock Text="{Binding BirthYear, Converter={StaticResource StringFormatConverter}, ConverterParameter='Age: {0}'}"/>
-                <TextBlock Text="{Binding Email, Converter={StaticResource StringFormatConverter}, ConverterParameter='Email: {0}'}"/>
-                <TextBlock Text="{Binding Phone, Converter={StaticResource StringFormatConverter}, ConverterParameter='Phone: {0}'}"/>
-                <TextBlock Text="{Binding City, Converter={StaticResource StringFormatConverter}, ConverterParameter='City: {0}'}"/>
-                <TextBlock Text="{Binding ArrivalString, Converter={StaticResource StringFormatConverter}, ConverterParameter='Arrival: {0}'}"/>
-                <TextBlock Text="{Binding DepartureString, Converter={StaticResource StringFormatConverter}, ConverterParameter='Departure: {0}'}"/>
-                <TextBlock Text="{Binding AdditionalItems, Converter={StaticResource StringListConverter}}"/>
-                <TextBlock Text="{Binding TotalPrice, Converter={StaticResource StringFormatConverter}, ConverterParameter='TotalPrice: {0}'}"/>
-            </StackPanel>
-        </Expander>
-    </StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <Grid x:Name="SignCanvas">
+                <Rectangle Height="200" Width="400" Stroke="Black"/>
+            </Grid>
+            <Expander IsExpanded="False" Header="User Details">
+                <StackPanel>
+                    <TextBlock Text="{Binding Order, Converter={StaticResource StringFormatConverter}, ConverterParameter='Number: {0}'}"/>
+                    <TextBlock Text="{Binding Name, Converter={StaticResource StringFormatConverter}, ConverterParameter='Name: {0}'}" />
+                    <TextBlock Text="{Binding Surname, Converter={StaticResource StringFormatConverter}, ConverterParameter='Surname: {0}'}"/>
+                    <TextBlock Text="{Binding BirthYear, Converter={StaticResource StringFormatConverter}, ConverterParameter='Age: {0}'}"/>
+                    <TextBlock Text="{Binding Email, Converter={StaticResource StringFormatConverter}, ConverterParameter='Email: {0}'}"/>
+                    <TextBlock Text="{Binding Phone, Converter={StaticResource StringFormatConverter}, ConverterParameter='Phone: {0}'}"/>
+                    <TextBlock Text="{Binding City, Converter={StaticResource StringFormatConverter}, ConverterParameter='City: {0}'}"/>
+                    <TextBlock Text="{Binding ArrivalString, Converter={StaticResource StringFormatConverter}, ConverterParameter='Arrival: {0}'}"/>
+                    <TextBlock Text="{Binding DepartureString, Converter={StaticResource StringFormatConverter}, ConverterParameter='Departure: {0}'}"/>
+                    <TextBlock Text="{Binding AdditionalItems, Converter={StaticResource StringListConverter}}"/>
+                    <TextBlock Text="{Binding TotalPrice, Converter={StaticResource StringFormatConverter}, ConverterParameter='TotalPrice: {0}'}"/>
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
 </ContentDialog>

@@ -15,6 +15,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI;
+using System.Diagnostics;
 
 //https://www.charlespetzold.com/blog/2012/11/The-Lesson-of-GetIntermediatePoints.html
 namespace MatesovaPrace
@@ -29,46 +30,72 @@ namespace MatesovaPrace
 
         void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            // Get information from event arguments
-            uint id = e.Pointer.PointerId;
-
-            // If ID is in dictionary, add the points to the Polyline
-            if (pointerDictionary.ContainsKey(id))
+            try
             {
-                foreach (PointerPoint pointerPoint in  e.GetIntermediatePoints(sender as UIElement).Reverse())
+                // Get information from event arguments
+                uint id = e.Pointer.PointerId;
+
+                // If ID is in dictionary, add the points to the Polyline
+                if (pointerDictionary.ContainsKey(id))
                 {
-                    pointerDictionary[id].Points.Add(pointerPoint.Position);
+                    foreach (PointerPoint pointerPoint in e.GetIntermediatePoints(SignCanvas).Reverse())
+                    {
+                        pointerDictionary[id].Points.Add(pointerPoint.Position);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
             }
         }
 
         void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            // Get information from event arguments
-            uint id = e.Pointer.PointerId;
-            Point point = e.GetCurrentPoint(sender as UIElement).Position;
-
-            // Create Polyline
-            Polyline polyline = new Polyline
+            try
             {
-                Stroke = new SolidColorBrush(Colors.Black),
-                StrokeThickness = 1
-            };
-            polyline.Points.Add(point);
+                // Get information from event arguments
+                uint id = e.Pointer.PointerId;
+                Point point = e.GetCurrentPoint(SignCanvas).Position;
+                if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
+                {
+                    // Create Polyline
+                    Polyline polyline = new Polyline
+                    {
+                        Stroke = new SolidColorBrush(Colors.Black),
+                        StrokeThickness = 1
+                    };
+                    polyline.Points.Add(point);
 
-            // Add to Grid and dictionary
-            SignCanvas.Children.Add(polyline);
-            pointerDictionary.Add(id, polyline);
+                    // Add to Grid and dictionary
+                    SignCanvas.Children.Add(polyline);
+                    pointerDictionary.Add(id, polyline);
+                    SignCanvas.CapturePointer(e.Pointer);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
 
         void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            // Get information from event arguments
-            uint id = e.Pointer.PointerId;
+            try
+            {
+                // Get information from event arguments
+                uint id = e.Pointer.PointerId;
 
-            // If ID is in dictionary, remove it
-            if (pointerDictionary.ContainsKey(id))
-                pointerDictionary.Remove(id);
+                // If ID is in dictionary, remove it
+                if (pointerDictionary.ContainsKey(id))
+                {
+                    pointerDictionary.Remove(id);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
     }
 }
