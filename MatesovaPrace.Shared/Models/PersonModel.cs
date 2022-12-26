@@ -24,6 +24,8 @@ namespace MatesovaPrace.Models
     }
     class PersonModel : INotifyPropertyChanged
     {
+        private string matesNote;
+
         public PersonModel(string order, string name, string surname, uint birthYear, string email, string phone, string city, string instrument, bool firstTime, string? whoInvited, string? health, string? food, string? note, string type, DateTime arrival, Meal firstMeal, DateTime departure, Meal lastMeal, string[]? additionalItems, Status status, float nightPrice, float totalPrice, string? internalNote, DateTime signupDate, float extraItemsPrice)
         {
             Order = order;
@@ -101,6 +103,17 @@ namespace MatesovaPrace.Models
 
         public RelayCommand<Grid> AcceptSignatureCommand { get; set; }
         public RelayCommand ClearSignatureCommand { get; set; }
+        public string MatesNote
+        {
+            get => matesNote; set
+            {
+                if(matesNote != value)
+                {
+                    matesNote = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MatesNote)));
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

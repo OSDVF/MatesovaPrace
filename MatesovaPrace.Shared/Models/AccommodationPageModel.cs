@@ -124,7 +124,8 @@ namespace MatesovaPrace.Models
             }
         }
 
-        private bool autoSave;
+        private bool autoSave = true;
+        private bool uploading;
 
         public bool AutoSave
         {
@@ -140,5 +141,16 @@ namespace MatesovaPrace.Models
             }
         }
 
+        public bool Uploading
+        {
+            get => uploading; set
+            {
+                if(uploading != value)
+                {
+                    uploading = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Uploading)));
+                }
+            }
+        }
     }
 }

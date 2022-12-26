@@ -26,8 +26,12 @@
             </Grid.ColumnDefinitions>
             <local:UserCircle Grid.Column="0" Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
             <CommandBar Grid.Column="1" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
+                <AppBarButton Label="Upload" Visibility="{Binding AutoSave, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='Reverse'}" Command="{x:Bind UploadCommand}" />
                 <AppBarElementContainer>
                     <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="12,10,0,0" />
+                </AppBarElementContainer>
+                <AppBarElementContainer>
+                    <ProgressRing Visibility="{Binding Uploading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </AppBarElementContainer>
                 <CommandBar.SecondaryCommands>
                     <AppBarToggleButton Label="Auto Save" IsChecked="{Binding AutoSave}" />
@@ -39,7 +43,7 @@
             <Rectangle Grid.Column="2" x:Name="MainAppBar" />
         </Grid>
         <!--Grid of accommodated people-->
-        <ListView  Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click">
+        <ListView Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Height="20">
@@ -65,6 +69,8 @@
                                    ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                                    Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding TotalPrice}" Width="{Binding DataContext.ColumnWidths[10], ElementName=MainPageElement}"/>
+                        <TextBox PlaceholderText="Note" Text="{Binding MatesNote}" />
+                        <Image Source="{Binding Signature}" Height="50"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>

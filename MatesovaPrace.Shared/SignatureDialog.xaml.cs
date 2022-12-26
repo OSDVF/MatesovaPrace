@@ -101,7 +101,7 @@ namespace MatesovaPrace
                     Polyline polyline = new Polyline
                     {
                         Stroke = new SolidColorBrush(Colors.Black),
-                        StrokeThickness = 1
+                        StrokeThickness = 2
                     };
                     polyline.Points.Add(point);
 

@@ -10,5 +10,6 @@ namespace MatesovaPrace
     interface IDataSource
     {
         public abstract Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true);
+        public Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> index);
     }
 }

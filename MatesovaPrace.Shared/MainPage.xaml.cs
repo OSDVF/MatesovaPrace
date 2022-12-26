@@ -1,4 +1,5 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using CommunityToolkit.Mvvm.Input;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Util.Store;
 using MatesovaPrace.Models;
@@ -34,8 +35,10 @@ namespace MatesovaPrace
         AccommodationPageModel model = new();
         private App? app;
         private SignatureDialog signatureDialog;
-        public bool HideUnlogged { get; set; } = true;
         private UWPObjectStorage objectStorage;
+        private LinkedList<int> changedItems = new();
+        public RelayCommand UploadCommand { get; set; }
+        public bool HideUnlogged { get; set; } = true;
 
         public MainPage()
         {
@@ -48,6 +51,7 @@ namespace MatesovaPrace
             SizeChanged += ResetTitlebar;
 #endif
             Loaded += MainPage_Loaded;
+            UploadCommand = new RelayCommand(Upload);
             objectStorage = new();
             TryLoadState();
         }
@@ -154,7 +158,11 @@ namespace MatesovaPrace
                 dialogMutex.Release();
                 if (result == ContentDialogResult.Primary)
                 {
-                    var pngStream = await (signatureDialog.DataContext as PersonModel).GetSignaturePNG();
+                    changedItems.AddLast(model.People.IndexOf(e.ClickedItem as PersonModel));
+                    if (model.AutoSave)
+                    {
+                        Upload();
+                    }
                 }
             }
             catch (Exception ex)
@@ -175,6 +183,14 @@ namespace MatesovaPrace
         {
             var cb = (sender as CommandBar);
             cb.IsOpen = !cb.IsOpen;
+        }
+
+        public async void Upload()
+        {
+            model.Uploading = true;
+            await model.DataSource!.Upload(model.People, changedItems);
+            changedItems.Clear();
+            model.Uploading = false;
         }
     }
 }

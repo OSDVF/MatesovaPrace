@@ -11,6 +11,7 @@ using MatesovaPrace.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -87,23 +88,6 @@ namespace MatesovaPrace
             return people;
         }
 
-        public async Task<Stream> UpdatePerson(PersonModel person, uint index)
-        {
-            var randStream = await person.GetSignaturePNG();
-            HttpContent fileStreamContent = new StreamContent(randStream.AsStream());
-            using (var client = new HttpClient())
-            using (var formData = new MultipartFormDataContent())
-            {
-                formData.Add(fileStreamContent, "fileToUpload", person.Name + person.Surname + person.SignupDate.ToString());
-                var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-                return await response.Content.ReadAsStreamAsync();
-            }
-        }
-
         public static GoogleAuthorizationCodeFlow GetFlow(IDataStore objectStorage)
         {
             return new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
@@ -124,6 +108,77 @@ namespace MatesovaPrace
                                             .Single(str => str.EndsWith("client.json"));
             using Stream stream = assembly.GetManifestResourceStream(resourceName);
             return NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(stream);
+        }
+
+        private string GetExcelColumnName(int columnNumber)
+        {
+            string columnName = "";
+
+            while (columnNumber > 0)
+            {
+                int modulo = (columnNumber - 1) % 26;
+                columnName = Convert.ToChar('A' + modulo) + columnName;
+                columnNumber = (columnNumber - modulo) / 26;
+            }
+
+            return columnName;
+        }
+        public async Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> indexes)
+        {
+            List<ValueRange> updateRanges = new();
+            foreach (var i in indexes)
+            {
+                var person = people[i];
+                string imageUrl;
+
+                var randStream = await person.GetSignaturePNG();
+                HttpContent fileStreamContent = new StreamContent(randStream.AsStream());
+                using (var client = new HttpClient())
+                using (var formData = new MultipartFormDataContent())
+                {
+                    formData.Add(fileStreamContent, "fileToUpload", SheetId + i + ".png");
+                    var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return;
+                    }
+                    imageUrl = await response.Content.ReadAsStringAsync();
+                }
+
+                updateRanges.Add(new ValueRange
+                {
+                    Range = $"accommodation!{GetExcelColumnName(2)}{i + 3}:{GetExcelColumnName(12)}",
+                    Values = new List<IList<object>>{
+                        new List<object>{
+                            person.Name,person.Surname,
+                            DateTime.Now.Year - person.BirthYear,
+                            person.City,
+                            person.ArrivalString,
+                            person.DepartureString,
+                            (person.Departure - person.Arrival).Days,
+                            person.TotalPrice,
+                            0,
+                            0,
+                            person.MatesNote,
+                            "=IMAGE(\""+imageUrl+"\")"
+                        }
+                    }
+                });
+            }
+            var request = new BatchUpdateValuesRequest
+            {
+                Data = updateRanges,
+                ValueInputOption = "USER_ENTERED"
+            };
+            var request2 = Service.Spreadsheets.Values.BatchUpdate(request, SheetId);
+            try
+            {
+                await request2.ExecuteAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
     }
 }
