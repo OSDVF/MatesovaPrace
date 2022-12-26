@@ -123,5 +123,22 @@ namespace MatesovaPrace.Models
                 }
             }
         }
+
+        private bool autoSave;
+
+        public bool AutoSave
+        {
+            get { return autoSave; }
+            set
+            {
+                if (autoSave != value)
+                {
+                    autoSave = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AutoSave)));
+
+                }
+            }
+        }
+
     }
 }

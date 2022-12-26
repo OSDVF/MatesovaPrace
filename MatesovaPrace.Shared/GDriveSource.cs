@@ -1,13 +1,20 @@
 ﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Drive.v3;
 using Google.Apis.Drive.v3.Data;
+using Google.Apis.Json;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
+using Google.Apis.Util.Store;
 using MatesovaPrace.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation;
@@ -78,6 +85,45 @@ namespace MatesovaPrace
                 index++;
             }
             return people;
+        }
+
+        public async Task<Stream> UpdatePerson(PersonModel person, uint index)
+        {
+            var randStream = await person.GetSignaturePNG();
+            HttpContent fileStreamContent = new StreamContent(randStream.AsStream());
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                formData.Add(fileStreamContent, "fileToUpload", person.Name + person.Surname + person.SignupDate.ToString());
+                var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+                return await response.Content.ReadAsStreamAsync();
+            }
+        }
+
+        public static GoogleAuthorizationCodeFlow GetFlow(IDataStore objectStorage)
+        {
+            return new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
+            {
+                ClientSecrets = GetClient().Secrets,
+                DataStore = objectStorage,
+                Scopes = new[]
+                {
+                    DriveService.Scope.Drive
+                }
+            });
+        }
+
+        public static GoogleClientSecrets GetClient()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourceName = assembly.GetManifestResourceNames()
+                                            .Single(str => str.EndsWith("client.json"));
+            using Stream stream = assembly.GetManifestResourceStream(resourceName);
+            return NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(stream);
         }
     }
 }

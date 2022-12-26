@@ -3,6 +3,9 @@ using Microsoft.UI.Xaml.Controls;
 using Google.Apis.Auth.OAuth2;
 using MatesovaPrace.Models;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Composition;
+using Google.Apis.Util.Store;
+using Google.Apis.Auth.OAuth2.Responses;
 
 namespace MatesovaPrace
 {

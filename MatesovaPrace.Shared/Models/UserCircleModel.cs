@@ -25,7 +25,6 @@ namespace MatesovaPrace.Models
             }
         }
         public Brush CircleFill => UserCredential == null ? new SolidColorBrush(Colors.Gray) : new SolidColorBrush(Colors.CornflowerBlue);
-
         public string PopupText => UserCredential == null ? "Not logged in" : "Logged in";
         public Symbol Icon => UserCredential == null ? Symbol.BlockContact : Symbol.Contact;
 

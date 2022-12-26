@@ -25,12 +25,13 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <local:UserCircle Grid.Column="0" Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
-            <CommandBar Grid.Column="1" HorizontalAlignment="Left">
+            <CommandBar Grid.Column="1" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
                 <AppBarElementContainer>
                     <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="12,10,0,0" />
                 </AppBarElementContainer>
                 <CommandBar.SecondaryCommands>
-                    <AppBarToggleButton Label="Hide unlogged people" IsChecked="{x:Bind HideUnlogged}" />
+                    <AppBarToggleButton Label="Auto Save" IsChecked="{Binding AutoSave}" />
+                    <AppBarToggleButton Label="Hide Unlogged People" IsChecked="{x:Bind HideUnlogged}" />
                     <AppBarButton Label="Reload" Click="Reload_Click" />
                     <AppBarButton Label="Select Different Sheet" Click="ShowLoginPage_Click" />
                 </CommandBar.SecondaryCommands>
@@ -38,7 +39,7 @@
             <Rectangle Grid.Column="2" x:Name="MainAppBar" />
         </Grid>
         <!--Grid of accommodated people-->
-        <ListView  Grid.Row="1" ItemsSource="{Binding People}" SelectionChanged="ListView_SelectionChanged">
+        <ListView  Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Height="20">
@@ -82,5 +83,6 @@
         <StackPanel Grid.Row="1" Visibility="{Binding FoundAuthCode, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
+        <ProgressRing Grid.Row="1" Visibility="{Binding PeopleLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
     </Grid>
 </Page>

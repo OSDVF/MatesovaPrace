@@ -53,16 +53,13 @@ namespace MatesovaPrace
         private UWPObjectStorage objectStorage = new();
         private App? app;
         private GoogleClientSecrets gClient;
-        internal Action<IDataSource>? OnConnected { get; set; }
+        internal Action<IDataSource?>? OnConnected { get; set; }
         public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
         public FileDetailView fileDetailView;
         public LoginPage()
         {
             InitializeComponent();
             DataContext = _data;
-            // Inject client secret into configuration
-            GetClient();
-
 #if WINDOWS
             app = (Application.Current as App);
             SetTitleBar();
@@ -72,18 +69,34 @@ namespace MatesovaPrace
             Loaded += LoginPage_Loaded;
         }
 
-        private void LoginPage_Loaded(object sender, RoutedEventArgs e)
+        private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
             fileDetailView = new FileDetailView()
             {
                 DataContext = _data,
                 XamlRoot = XamlRoot
             };
+
+            // Inject client secret into configuration
+            try
+            {
+                gClient = GDriveSource.GetClient();
+            }
+            catch (Exception)
+            {
+                await new ContentDialog
+                {
+                    Content = "Application was compiled without Google Client token",
+                    Title = "Error",
+                    XamlRoot = XamlRoot,
+                    CloseButtonText = "Dismiss"
+                }.ShowAsync();
+            }
         }
 
         private void SetTitleBar()
         {
-            app?.MainWindow.SetTitleBar((UIElement)((AppBarElementContainer)AppBar.PrimaryCommands[2]).Content);
+            app?.MainWindow.SetTitleBar(AppBar);
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -108,7 +121,7 @@ namespace MatesovaPrace
                 // Redirect back to where we are right now
                 redirectUri = WebAssemblyRuntime.InvokeJS("location.origin") + "/";
 #endif
-                GoogleAuthorizationCodeFlow flow = GetFlow();
+                GoogleAuthorizationCodeFlow flow = GDriveSource.GetFlow(objectStorage);
                 flow.ExchangeCodeForTokenAsync("user", connectedAndAuth.Item2, redirectUri, CancellationToken.None)
                     .ContinueWith(response =>
                     {
@@ -130,20 +143,6 @@ namespace MatesovaPrace
                 GDriveAuth();
             }
             base.OnNavigatedTo(e);
-        }
-
-        private GoogleAuthorizationCodeFlow GetFlow()
-        {
-            return new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
-            {
-                ClientSecrets = gClient.Secrets,
-                DataStore = objectStorage,
-                Scopes = new[]
-                {
-                    DriveService.Scope.Drive,
-                    SheetsService.Scope.Spreadsheets
-                }
-            });
         }
 
         async void LoadSettings()
@@ -196,7 +195,7 @@ namespace MatesovaPrace
                 {
                     fileInfo = await request.ExecuteAsync();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     ex = e;
                 }
@@ -208,7 +207,7 @@ namespace MatesovaPrace
                         Content = $"File {_data.SheetId} not found.",
                         XamlRoot = XamlRoot
                     };
-                    if(ex != null)
+                    if (ex != null)
                     {
                         (dialog.Content) += $"\nAn error occured: ${ex}";
                     }
@@ -236,7 +235,7 @@ namespace MatesovaPrace
                 Console.WriteLine("Already authenticated");
                 return;
             }
-            var token = await objectStorage.GetAsync<TokenResponse>("TokenResponse");
+            var token = await objectStorage.GetAsync<TokenResponse>("user");
             if (token == null)
             {
 #if __WASM__
@@ -266,7 +265,7 @@ namespace MatesovaPrace
             }
             else
             {
-                Credential = new UserCredential(GetFlow(), "user", token);
+                Credential = new UserCredential(GDriveSource.GetFlow(objectStorage), "user", token);
                 Console.WriteLine("Loaded credentials from cache");
             }
             CreateDriveService();
@@ -280,28 +279,6 @@ namespace MatesovaPrace
                 ApplicationName = "MatesovaPrace",
             });
             Console.WriteLine("GDrive service created");
-        }
-
-        private async void GetClient()
-        {
-            try
-            {
-                var assembly = Assembly.GetExecutingAssembly();
-                string resourceName = assembly.GetManifestResourceNames()
-                    .Single(str => str.EndsWith("client.json"));
-                using Stream stream = assembly.GetManifestResourceStream(resourceName);
-                gClient = NewtonsoftJsonSerializer.Instance.Deserialize<GoogleClientSecrets>(stream);
-            }
-            catch (Exception)
-            {
-                await new ContentDialog
-                {
-                    Content = "Application was compiled without Google Client token",
-                    Title = "Error",
-                    XamlRoot = XamlRoot,
-                    CloseButtonText = "Dismiss"
-                }.ShowAsync();
-            }
         }
 
         private async void Search_Click(object sender, RoutedEventArgs e)
@@ -392,7 +369,7 @@ namespace MatesovaPrace
                 _data.DetailLoading = false;
                 if (await futureDialog == ContentDialogResult.Primary)
                 {
-                    if(OnConnected == null)
+                    if (OnConnected == null)
                     {
                         fileDetailView.Hide();
                         await new ContentDialog
@@ -405,6 +382,7 @@ namespace MatesovaPrace
                     }
                     else
                     {
+                        objectStorage.StoreAsync<string>("sheetId", file.Id);
                         OnConnected(new GDriveSource(Credential)
                         {
                             SheetId = file.Id,
@@ -436,6 +414,19 @@ namespace MatesovaPrace
         void Back_Click(object sender, RoutedEventArgs e)
         {
             Frame.GoBack();
+        }
+
+        public void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            objectStorage.DeleteAsync<TokenResponse>("user");
+            Credential = null;
+            OnConnected?.Invoke(null);
+        }
+
+        private void CommandBar_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            var cb = (sender as CommandBar);
+            cb.IsOpen = !cb.IsOpen;
         }
     }
 }

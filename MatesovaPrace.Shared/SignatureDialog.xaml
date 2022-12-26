@@ -11,6 +11,11 @@
     d:DesignHeight="300"
     d:DesignWidth="400"
     d:DataContext="{d:DesignInstance Type=models:PersonModel, IsDesignTimeCreatable=True}"
+    PrimaryButtonText="Accept Signature"
+    PrimaryButtonCommand="{Binding AcceptSignatureCommand}"
+    PrimaryButtonCommandParameter="{Binding ElementName=SignCanvas}"
+    SecondaryButtonText="Clear Canvas"
+    SecondaryButtonCommand="{Binding ClearSignatureCommand}"
     CloseButtonText="Close"
     Title="Signature"
     PointerMoved="Canvas_PointerMoved" PointerCanceled="Canvas_PointerReleased" PointerReleased="Canvas_PointerReleased" PointerCaptureLost="Canvas_PointerReleased" PointerExited="Canvas_PointerReleased" PointerPressed="Canvas_PointerPressed"
@@ -18,9 +23,11 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <Grid x:Name="SignCanvas">
-                <Rectangle Height="200" Width="400" Stroke="Black"/>
-            </Grid>
+            <Border BorderBrush="Black" BorderThickness="0.5">
+                <Grid x:Name="SignCanvas" MinHeight="100" MinWidth="300">
+                    <Image Source="{Binding Signature}" Stretch="None" />
+                </Grid>
+            </Border>
             <Expander IsExpanded="False" Header="User Details">
                 <StackPanel>
                     <TextBlock Text="{Binding Order, Converter={StaticResource StringFormatConverter}, ConverterParameter='Number: {0}'}"/>

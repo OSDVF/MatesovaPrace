@@ -1,4 +1,7 @@
-﻿using MatesovaPrace.Models;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Responses;
+using Google.Apis.Util.Store;
+using MatesovaPrace.Models;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -9,9 +12,11 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Core;
@@ -30,6 +35,7 @@ namespace MatesovaPrace
         private App? app;
         private SignatureDialog signatureDialog;
         public bool HideUnlogged { get; set; } = true;
+        private UWPObjectStorage objectStorage;
 
         public MainPage()
         {
@@ -42,6 +48,22 @@ namespace MatesovaPrace
             SizeChanged += ResetTitlebar;
 #endif
             Loaded += MainPage_Loaded;
+            objectStorage = new();
+            TryLoadState();
+        }
+
+        async void TryLoadState()
+        {
+            var sheetId = await objectStorage.GetAsync<string>("sheetId");
+            if (sheetId != null)
+            {
+                var TokenResponse = await objectStorage.GetAsync<TokenResponse>("user");
+                OnLoggedIn(new GDriveSource(new UserCredential(GDriveSource.GetFlow(objectStorage), "user", TokenResponse))
+                {
+                    SheetId = sheetId
+                });
+                Debug.WriteLine("Loaded state from storage");
+            }
         }
 
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
@@ -83,7 +105,7 @@ namespace MatesovaPrace
 
         private void ShowLoginPage_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(LoginPage), (Action<IDataSource>)OnLoggedIn);
+            Frame.Navigate(typeof(LoginPage), (Action<IDataSource?>)OnLoggedIn);
         }
 
         void ManualAuth_Click(object sender, RoutedEventArgs e)
@@ -91,9 +113,13 @@ namespace MatesovaPrace
             Frame.Navigate(typeof(LoginPage), new Tuple<Action<IDataSource>, string>(OnLoggedIn, model.ManualAuthCode));
         }
 
-        async void OnLoggedIn(IDataSource newConnection)
+        async void OnLoggedIn(IDataSource? newConnection)
         {
             model.DataSource = newConnection;
+            if (model.DataSource == null)
+            {
+                return;
+            }
             model.PeopleLoading = true;
             try
             {
@@ -116,13 +142,39 @@ namespace MatesovaPrace
         {
             OnLoggedIn(model.DataSource);
         }
+        SemaphoreSlim dialogMutex = new(1);
 
-        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void ListView_Click(object sender, ItemClickEventArgs e)
         {
-            signatureDialog.DataContext = e.AddedItems[0];
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            signatureDialog.ShowAsync();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            await dialogMutex.WaitAsync();
+            signatureDialog.DataContext = e.ClickedItem;
+            try
+            {
+                var result = await signatureDialog.ShowAsync();
+                dialogMutex.Release();
+                if (result == ContentDialogResult.Primary)
+                {
+                    var pngStream = await (signatureDialog.DataContext as PersonModel).GetSignaturePNG();
+                }
+            }
+            catch (Exception ex)
+            {
+                dialogMutex.Release();
+                Debug.WriteLine(ex);
+            }
+
+        }
+
+        public void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            new UWPObjectStorage().DeleteAsync<TokenResponse>("user");
+            model.DataSource = null;
+        }
+
+        private void CommandBar_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            var cb = (sender as CommandBar);
+            cb.IsOpen = !cb.IsOpen;
         }
     }
 }
