@@ -23,7 +23,7 @@
             <CommandBar Grid.Column="0" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
                 <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
                 <AppBarElementContainer>
-                    <local:UserCircle Margin="5,0,0,0" Credential="{Binding Credential, ElementName=LoginPageElement, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <local:UserCircle Margin="5,0,0,0" Credential="{Binding Source.Credential}" />
                 </AppBarElementContainer>
                 <AppBarElementContainer>
                     <TextBlock Text="Select Google Sheet" FontSize="18" Margin="12,10,0,0"/>

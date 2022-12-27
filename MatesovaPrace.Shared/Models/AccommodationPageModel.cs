@@ -69,6 +69,18 @@ namespace MatesovaPrace.Models
                 }
             }
         }
+
+        public ObservableCollection<PersonModel> CachedPeople
+        {
+            get => cachedPeople; set
+            {
+                if (cachedPeople != value)
+                {
+                    cachedPeople = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CachedPeople)));
+                }
+            }
+        }
         public string ManualAuthCode
         {
             get => manualAuthCode; set
@@ -126,6 +138,8 @@ namespace MatesovaPrace.Models
 
         private bool autoSave = true;
         private bool uploading;
+        private ObservableCollection<PersonModel>? cachedPeople = null;
+        private bool offline;
 
         public bool AutoSave
         {
@@ -145,10 +159,22 @@ namespace MatesovaPrace.Models
         {
             get => uploading; set
             {
-                if(uploading != value)
+                if (uploading != value)
                 {
                     uploading = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Uploading)));
+                }
+            }
+        }
+
+        public bool Offline
+        {
+            get => offline; internal set
+            {
+                if(offline != value)
+                {
+                    offline = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Offline)));
                 }
             }
         }

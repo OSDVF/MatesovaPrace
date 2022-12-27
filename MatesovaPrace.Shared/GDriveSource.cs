@@ -17,6 +17,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation;
 
@@ -25,6 +27,21 @@ namespace MatesovaPrace
     class GDriveSource : ConnectionModel, IDataSource
     {
         public SheetsService Service { get; set; }
+        public static UWPObjectStorage ObjectStorage = new();
+        private static GoogleClientSecrets? client;
+        private static XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
+
+        public static GoogleClientSecrets Client
+        {
+            get
+            {
+                if (client == null)
+                {
+                    client = GetClient();
+                }
+                return client;
+            }
+        }
 
         public GDriveSource(UserCredential credential)
         {
@@ -33,6 +50,26 @@ namespace MatesovaPrace
                 HttpClientInitializer = Credential = credential,
                 ApplicationName = "MatesovaPrace",
             });
+        }
+
+        public static async Task<GDriveSource> FromAuthCode(string authCode, string redirectUri)
+        {
+            GoogleAuthorizationCodeFlow flow = GetFlow();
+            var response = await flow.ExchangeCodeForTokenAsync("user", authCode, redirectUri, CancellationToken.None);
+
+            return new GDriveSource(new UserCredential(flow, "user", response));
+        }
+
+        public static async Task<GDriveSource> AuthorizeAsync()
+        {
+            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                Client.Secrets,
+                new[] {
+                    DriveService.Scope.Drive
+                },
+                "user", CancellationToken.None, ObjectStorage, receiver
+            );
+            return new GDriveSource(credential);
         }
 
         public async Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true)
@@ -88,12 +125,12 @@ namespace MatesovaPrace
             return people;
         }
 
-        public static GoogleAuthorizationCodeFlow GetFlow(IDataStore objectStorage)
+        public static GoogleAuthorizationCodeFlow GetFlow()
         {
             return new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
-                ClientSecrets = GetClient().Secrets,
-                DataStore = objectStorage,
+                ClientSecrets = Client.Secrets,
+                DataStore = ObjectStorage,
                 Scopes = new[]
                 {
                     DriveService.Scope.Drive
@@ -136,7 +173,8 @@ namespace MatesovaPrace
                 using (var client = new HttpClient())
                 using (var formData = new MultipartFormDataContent())
                 {
-                    formData.Add(fileStreamContent, "fileToUpload", SheetId + i + ".png");
+                    formData.Add(fileStreamContent, "fileToUpload", SheetId + '-' + person.Email +
+                        Regex.Replace(person.Name, @"[^\u0000-\u007F]+", string.Empty) + ".png");
                     var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
                     if (!response.IsSuccessStatusCode)
                     {
@@ -147,7 +185,7 @@ namespace MatesovaPrace
 
                 updateRanges.Add(new ValueRange
                 {
-                    Range = $"accommodation!{GetExcelColumnName(2)}{i + 3}:{GetExcelColumnName(12)}",
+                    Range = $"accommodation!{GetExcelColumnName(2)}{i + 3}:{GetExcelColumnName(14)}",
                     Values = new List<IList<object>>{
                         new List<object>{
                             person.Name,person.Surname,
@@ -171,14 +209,11 @@ namespace MatesovaPrace
                 ValueInputOption = "USER_ENTERED"
             };
             var request2 = Service.Spreadsheets.Values.BatchUpdate(request, SheetId);
-            try
-            {
-                await request2.ExecuteAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex);
-            }
+            await request2.ExecuteAsync();
+        }
+        public Task PutIntoCacheAsync<T>(T obj, string key)
+        {
+            return ObjectStorage.StoreAsync<T>(key, obj);
         }
     }
 }

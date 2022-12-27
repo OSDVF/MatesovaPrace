@@ -19,6 +19,7 @@ namespace MatesovaPrace.Models
         private FileDetailModel? selectedFile;
         private bool searching;
         private bool detailLoading;
+        private GDriveSource? source;
 
         public string? SheetId { get; set; }
         public string FindString { get; set; } = "";
@@ -64,8 +65,22 @@ namespace MatesovaPrace.Models
             }
         }
 
+        public GDriveSource? Source
+        {
+            get => source; set
+            {
+                if (source != value)
+                {
+                    source = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Source)));
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
+
+
 
     public class FileListModel
     {

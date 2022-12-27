@@ -11,6 +11,7 @@ using Windows.Storage.Streams;
 using System.Diagnostics;
 using Windows.Graphics.Display;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace MatesovaPrace.Models
 {
@@ -25,6 +26,8 @@ namespace MatesovaPrace.Models
     class PersonModel : INotifyPropertyChanged
     {
         private string matesNote;
+        private bool dirty;
+        private RenderTargetBitmap? signature = null;
 
         public PersonModel(string order, string name, string surname, uint birthYear, string email, string phone, string city, string instrument, bool firstTime, string? whoInvited, string? health, string? food, string? note, string type, DateTime arrival, Meal firstMeal, DateTime departure, Meal lastMeal, string[]? additionalItems, Status status, float nightPrice, float totalPrice, string? internalNote, DateTime signupDate, float extraItemsPrice)
         {
@@ -58,6 +61,12 @@ namespace MatesovaPrace.Models
             ClearSignatureCommand = new RelayCommand(ClearSignature);
         }
 
+        public PersonModel()
+        {
+            AcceptSignatureCommand = new RelayCommand<Grid>(AcceptSignature);
+            ClearSignatureCommand = new RelayCommand(ClearSignature);
+        }
+
         public string Order { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
@@ -73,6 +82,7 @@ namespace MatesovaPrace.Models
         public string? Note { get; set; }
         public string Type { get; set; }
         public DateTime Arrival { get; set; }
+        [JsonIgnore]
         public string ArrivalString
         {
             get
@@ -80,6 +90,7 @@ namespace MatesovaPrace.Models
                 return Arrival.ToString("dd.MM.yyyy");
             }
         }
+        [JsonIgnore]
         public string DepartureString
         {
             get
@@ -99,17 +110,41 @@ namespace MatesovaPrace.Models
         public string? InternalNote { get; set; }
         public DateTime SignupDate { get; set; }
         public float ExtraItemsPrice { get; set; }
-        public RenderTargetBitmap? Signature { get; set; } = null;
-
+        public RenderTargetBitmap? Signature
+        {
+            get => signature; set
+            {
+                if(signature != value)
+                {
+                    signature = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Signature)));
+                }
+            }
+        }
+        [JsonIgnore]
         public RelayCommand<Grid> AcceptSignatureCommand { get; set; }
+        [JsonIgnore]
         public RelayCommand ClearSignatureCommand { get; set; }
+
+        public bool Dirty
+        {
+            get => dirty; set
+            {
+                if (dirty != value)
+                {
+                    dirty = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Dirty)));
+                }
+            }
+        }
         public string MatesNote
         {
             get => matesNote; set
             {
-                if(matesNote != value)
+                if (matesNote != value)
                 {
                     matesNote = value;
+                    Dirty = true;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MatesNote)));
                 }
             }
@@ -123,7 +158,6 @@ namespace MatesovaPrace.Models
             try
             {
                 await Signature.RenderAsync(renderedGrid, (int)renderedGrid.ActualWidth, (int)renderedGrid.ActualHeight);
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Signature)));
             }
             catch (Exception ex)
             {
@@ -134,7 +168,6 @@ namespace MatesovaPrace.Models
         public void ClearSignature()
         {
             Signature = null;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Signature)));
         }
 
         public async Task<InMemoryRandomAccessStream> GetSignaturePNG()

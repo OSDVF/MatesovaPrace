@@ -28,11 +28,13 @@
             <CommandBar Grid.Column="1" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
                 <AppBarButton Label="Upload" Visibility="{Binding AutoSave, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='Reverse'}" Command="{x:Bind UploadCommand}" />
                 <AppBarElementContainer>
-                    <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="12,10,0,0" />
+                    <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="10,10,0,0" />
                 </AppBarElementContainer>
                 <AppBarElementContainer>
                     <ProgressRing Visibility="{Binding Uploading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </AppBarElementContainer>
+
+                <AppBarButton Icon="DisconnectDrive" ToolTipService.ToolTip="You are offline. Click to retry." Visibility="{Binding Offline, Converter={StaticResource BooleanToVisibilityConverter}}" Command="{x:Bind UploadCommand}" />
                 <CommandBar.SecondaryCommands>
                     <AppBarToggleButton Label="Auto Save" IsChecked="{Binding AutoSave}" />
                     <AppBarToggleButton Label="Hide Unlogged People" IsChecked="{x:Bind HideUnlogged}" />
@@ -46,9 +48,22 @@
         <ListView Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Height="20">
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </StackPanel.Resources>
+                        <SymbolIcon Symbol="Edit"
+                                    Width="{Binding DataContext.ColumnWidths[0], ElementName=MainPageElement}"
+                                    Visibility="{Binding Dirty, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <SymbolIcon.RenderTransform>
+                                <CompositeTransform ScaleX="0.7" ScaleY="0.7"/>
+                            </SymbolIcon.RenderTransform>
+                        </SymbolIcon>
                         <TextBlock Text="{Binding Order}" Width="{Binding DataContext.ColumnWidths[0], ElementName=MainPageElement}"
-                                   ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                   ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                                   Visibility="{Binding Dirty, Converter={StaticResource BooleanToVisibilityConverter},ConverterParameter='Reverse'}" />
                         <TextBlock Text="{Binding Name}" Width="{Binding DataContext.ColumnWidths[1], ElementName=MainPageElement}" 
                                    ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                         <TextBlock Text="{Binding Surname}" Width="{Binding DataContext.ColumnWidths[2], ElementName=MainPageElement}"
@@ -69,14 +84,20 @@
                                    ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                                    Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
                         <TextBlock Text="{Binding TotalPrice}" Width="{Binding DataContext.ColumnWidths[10], ElementName=MainPageElement}"/>
-                        <TextBox PlaceholderText="Note" Text="{Binding MatesNote}" />
-                        <Image Source="{Binding Signature}" Height="50"/>
+                        <TextBox PlaceholderText="Note" Text="{Binding MatesNote, Mode=TwoWay}" />
+                        <Image Source="{Binding Signature}" Height="30"/>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
 
         <StackPanel Grid.Row="1" Visibility="{Binding LoginRequestVisible}" Margin="20">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="0,5,0,5"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button Content="Load Offline Accommodation List" Style="{StaticResource AccentButtonStyle}" Click="LoadCachedPeople_Click" Visibility="{Binding CachedPeople, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <Button Content="Select Google Sheet" Click="ShowLoginPage_Click"/>
             <Expander Header="More options" IsExpanded="False">
                 <StackPanel>
@@ -89,6 +110,6 @@
         <StackPanel Grid.Row="1" Visibility="{Binding FoundAuthCode, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="20">
             <Button Content="Continue to Matesova Práce" Click="ManualAuth_Click"/>
         </StackPanel>
-        <ProgressRing Grid.Row="1" Visibility="{Binding PeopleLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <ProgressRing Grid.Row="1" Visibility="{Binding PeopleLoading, Converter={StaticResource BooleanToVisibilityConverter}}" Width="50" Height="50" />
     </Grid>
 </Page>

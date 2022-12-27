@@ -6,14 +6,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:MatesovaPrace.Models"
-    
-    mc:Ignorable="d"
+    xmlns:skia="http://uno.ui/skia"
+    xmlns:not_skia="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    mc:Ignorable="d skia"
     d:DesignHeight="300"
     d:DesignWidth="400"
     d:DataContext="{d:DesignInstance Type=models:PersonModel, IsDesignTimeCreatable=True}"
     PrimaryButtonText="Accept Signature"
     PrimaryButtonCommand="{Binding AcceptSignatureCommand}"
     PrimaryButtonCommandParameter="{Binding ElementName=SignCanvas}"
+    PrimaryButtonStyle="{StaticResource AccentButtonStyle}"
     SecondaryButtonText="Clear Canvas"
     SecondaryButtonCommand="{Binding ClearSignatureCommand}"
     CloseButtonText="Close"
@@ -23,11 +25,16 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <Border BorderBrush="Black" BorderThickness="0.5">
+            <skia:Border BorderBrush="Black" BorderThickness="1">
                 <Grid x:Name="SignCanvas" MinHeight="100" MinWidth="300">
                     <Image Source="{Binding Signature}" Stretch="None" />
                 </Grid>
-            </Border>
+            </skia:Border>
+            <not_skia:Border BorderBrush="Black" BorderThickness="0.5">
+                <Grid x:Name="SignCanvas" MinHeight="100" MinWidth="300">
+                    <Image Source="{Binding Signature}" Stretch="None" />
+                </Grid>
+            </not_skia:Border>
             <Expander IsExpanded="False" Header="User Details">
                 <StackPanel>
                     <TextBlock Text="{Binding Order, Converter={StaticResource StringFormatConverter}, ConverterParameter='Number: {0}'}"/>

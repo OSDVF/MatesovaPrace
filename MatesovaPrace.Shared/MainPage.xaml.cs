@@ -13,13 +13,16 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Networking.Connectivity;
 using Windows.UI.Core;
 #if __WASM__
 using Uno.Foundation;
@@ -35,7 +38,6 @@ namespace MatesovaPrace
         AccommodationPageModel model = new();
         private App? app;
         private SignatureDialog signatureDialog;
-        private UWPObjectStorage objectStorage;
         private LinkedList<int> changedItems = new();
         public RelayCommand UploadCommand { get; set; }
         public bool HideUnlogged { get; set; } = true;
@@ -52,21 +54,53 @@ namespace MatesovaPrace
 #endif
             Loaded += MainPage_Loaded;
             UploadCommand = new RelayCommand(Upload);
-            objectStorage = new();
             TryLoadState();
         }
 
         async void TryLoadState()
         {
-            var sheetId = await objectStorage.GetAsync<string>("sheetId");
-            if (sheetId != null)
+            model.CachedPeople = await GDriveSource.ObjectStorage.GetAsync<ObservableCollection<PersonModel>>("people");
+            if (NetworkInterface.GetIsNetworkAvailable())
             {
-                var TokenResponse = await objectStorage.GetAsync<TokenResponse>("user");
-                OnLoggedIn(new GDriveSource(new UserCredential(GDriveSource.GetFlow(objectStorage), "user", TokenResponse))
+                model.Offline = false;
+                var sheetId = await GDriveSource.ObjectStorage.GetAsync<string>("sheetId");
+                if (sheetId != null)
                 {
-                    SheetId = sheetId
-                });
-                Debug.WriteLine("Loaded state from storage");
+                    var TokenResponse = await GDriveSource.ObjectStorage.GetAsync<TokenResponse>("user");
+                    OnLoggedIn(new GDriveSource(new UserCredential(GDriveSource.GetFlow(), "user", TokenResponse))
+                    {
+                        SheetId = sheetId
+                    });
+                    Debug.WriteLine("Loaded state from storage");
+                }
+            }
+            else
+            {
+                model.Offline = true;
+                if (!registeredNetworkStatusNotif)
+                {
+                    var networkStatusCallback = new NetworkStatusChangedEventHandler(OnNetworkStatusChange);
+                    NetworkInformation.NetworkStatusChanged += networkStatusCallback;
+                    registeredNetworkStatusNotif = true;
+                }
+            }
+        }
+
+        private void OnNetworkStatusChange(object sender)
+        {
+            // get the ConnectionProfile that is currently used to connect to the Internet                
+            ConnectionProfile InternetConnectionProfile = NetworkInformation.GetInternetConnectionProfile();
+
+            if (InternetConnectionProfile == null)
+            {
+                DispatcherQueue.TryEnqueue(() => model.Offline = true);
+            }
+            else
+            {
+                if (model.People == null || model.People.Count == 0)
+                {
+                    DispatcherQueue.TryEnqueue(TryLoadState);
+                }
             }
         }
 
@@ -119,6 +153,31 @@ namespace MatesovaPrace
 
         async void OnLoggedIn(IDataSource? newConnection)
         {
+            bool changes = false;
+            foreach (var person in model.People)
+            {
+                if (person.Dirty)
+                {
+                    changes = true;
+                    break;
+                }
+            }
+            if(changes)
+            {
+                var result = await new ContentDialog
+                {
+                    Title = "There are changes",
+                    Content = "Upload your changes first and overwrite online data? Or use the online version and throw away your changes?",
+                    PrimaryButtonText = "Upload",
+                    SecondaryButtonText = "Ignore local changes",
+                    XamlRoot = XamlRoot
+                }.ShowAsync();
+                if(result == ContentDialogResult.Primary)
+                {
+                    Upload();
+                    return;
+                }
+            }
             model.DataSource = newConnection;
             if (model.DataSource == null)
             {
@@ -128,6 +187,14 @@ namespace MatesovaPrace
             try
             {
                 model.People = await model.DataSource.GetPeopleAsync(HideUnlogged);
+                try
+                {
+                    await model.DataSource.PutIntoCacheAsync(model.People, "people");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
             }
             catch (Exception e)
             {
@@ -147,6 +214,7 @@ namespace MatesovaPrace
             OnLoggedIn(model.DataSource);
         }
         SemaphoreSlim dialogMutex = new(1);
+        private bool registeredNetworkStatusNotif;
 
         private async void ListView_Click(object sender, ItemClickEventArgs e)
         {
@@ -158,7 +226,9 @@ namespace MatesovaPrace
                 dialogMutex.Release();
                 if (result == ContentDialogResult.Primary)
                 {
-                    changedItems.AddLast(model.People.IndexOf(e.ClickedItem as PersonModel));
+                    var person = e.ClickedItem as PersonModel;
+                    person.Dirty = true;
+                    changedItems.AddLast(model.People.IndexOf(person));
                     if (model.AutoSave)
                     {
                         Upload();
@@ -182,14 +252,47 @@ namespace MatesovaPrace
         private void CommandBar_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
             var cb = (sender as CommandBar);
-            cb.IsOpen = !cb.IsOpen;
+            cb!.IsOpen = !cb.IsOpen;
+        }
+
+        private void LoadCachedPeople_Click(object sender, RoutedEventArgs e)
+        {
+            model.People = model.CachedPeople;
+            model.DataSource = new DummyDataSource(async () =>
+            {
+                await new ContentDialog
+                {
+                    Title = "Not connected",
+                    Content = "Connect to a Google Sheet first",
+                    XamlRoot = XamlRoot
+                }.ShowAsync();
+            });
         }
 
         public async void Upload()
         {
             model.Uploading = true;
-            await model.DataSource!.Upload(model.People, changedItems);
-            changedItems.Clear();
+            if(model.DataSource == null)
+            {
+                TryLoadState();
+                model.Uploading = false;
+                return;
+            }
+            try
+            {
+                await model.DataSource!.Upload(model.People, changedItems);
+                foreach (var i in changedItems)
+                {
+                    model.People[i].Dirty = false;
+                }
+                changedItems.Clear();
+                model.Offline = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                model.Offline = true;
+            }
             model.Uploading = false;
         }
     }

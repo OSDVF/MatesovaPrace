@@ -27,6 +27,7 @@ using System.Net.Sockets;
 using Windows.Graphics.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.ComponentModel;
 #if __WASM__
 using Uno.Foundation;
 #endif
@@ -38,23 +39,8 @@ namespace MatesovaPrace
         const string configName = "appsettings.json";
 
         internal static LoginModel _data = new();
-
-        public UserCredential? Credential
-        {
-            get { return (UserCredential?)GetValue(CredentialProperty); }
-            set { SetValue(CredentialProperty, value); }
-        }
-
-        public static readonly DependencyProperty CredentialProperty =
-            DependencyProperty.Register("Credential", typeof(UserCredential), typeof(LoginPage), new PropertyMetadata(null));
-
         private DriveService? drive;
-        private XPlatformCodeReceiver receiver = new XPlatformCodeReceiver();
-        private UWPObjectStorage objectStorage = new();
         private App? app;
-        private GoogleClientSecrets gClient;
-        internal Action<IDataSource?>? OnConnected { get; set; }
-        public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
         public FileDetailView fileDetailView;
         public LoginPage()
         {
@@ -69,6 +55,10 @@ namespace MatesovaPrace
             Loaded += LoginPage_Loaded;
         }
 
+        public RelayCommand<FileListModel> ShowFileSelectDialog { get; set; }
+        internal Action<IDataSource?>? OnConnected { get; set; }
+        public Visibility NextPageVisible => string.IsNullOrEmpty(_data.NextPageToken) ? Visibility.Collapsed : Visibility.Visible;
+
         private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
             fileDetailView = new FileDetailView()
@@ -80,7 +70,7 @@ namespace MatesovaPrace
             // Inject client secret into configuration
             try
             {
-                gClient = GDriveSource.GetClient();
+                var _ = GDriveSource.Client;
             }
             catch (Exception)
             {
@@ -121,14 +111,9 @@ namespace MatesovaPrace
                 // Redirect back to where we are right now
                 redirectUri = WebAssemblyRuntime.InvokeJS("location.origin") + "/";
 #endif
-                GoogleAuthorizationCodeFlow flow = GDriveSource.GetFlow(objectStorage);
-                flow.ExchangeCodeForTokenAsync("user", connectedAndAuth.Item2, redirectUri, CancellationToken.None)
-                    .ContinueWith(response =>
-                    {
-                        Credential = new UserCredential(flow, "user", response.Result);
-                        CreateDriveService();
-                        LoadSettings();
-                    });
+                GDriveSource.FromAuthCode(connectedAndAuth.Item2, redirectUri).ContinueWith(s => _data.Source = s.Result);
+                CreateDriveService();
+                LoadSettings();
             }
             else
             {
@@ -230,12 +215,12 @@ namespace MatesovaPrace
 
         public async Task GDriveAuth()
         {
-            if (Credential != null)
+            if (_data.Source?.Credential != null)
             {
                 Console.WriteLine("Already authenticated");
                 return;
             }
-            var token = await objectStorage.GetAsync<TokenResponse>("user");
+            var token = await GDriveSource.ObjectStorage.GetAsync<TokenResponse>("user");
             if (token == null)
             {
 #if __WASM__
@@ -254,18 +239,13 @@ namespace MatesovaPrace
                 return;
 #else
                 Console.WriteLine("Authenticating for offline use");
-                Credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    gClient.Secrets,
-                    new[] {
-                        DriveService.Scope.Drive
-                    },
-                    "user", CancellationToken.None, objectStorage, receiver);
+                _data.Source = await GDriveSource.AuthorizeAsync();
 #endif
                 Console.WriteLine("Creating drive service #1");
             }
             else
             {
-                Credential = new UserCredential(GDriveSource.GetFlow(objectStorage), "user", token);
+                _data.Source = new GDriveSource(new UserCredential(GDriveSource.GetFlow(), "user", token));
                 Console.WriteLine("Loaded credentials from cache");
             }
             CreateDriveService();
@@ -273,10 +253,10 @@ namespace MatesovaPrace
 
         private void CreateDriveService()
         {
-            drive = new DriveService(new BaseClientService.Initializer()
+            drive = new DriveService(new DriveService.Initializer
             {
-                HttpClientInitializer = Credential,
-                ApplicationName = "MatesovaPrace",
+                HttpClientInitializer = _data.Source.Credential,
+                ApplicationName = "MatesovaPrace"
             });
             Console.WriteLine("GDrive service created");
         }
@@ -345,7 +325,6 @@ namespace MatesovaPrace
             }
         }
 
-        public RelayCommand<FileListModel> ShowFileSelectDialog { get; set; }
         async void SelectFileDialog(FileListModel? file)
         {
             if (file == null)
@@ -382,11 +361,9 @@ namespace MatesovaPrace
                     }
                     else
                     {
-                        objectStorage.StoreAsync<string>("sheetId", file.Id);
-                        OnConnected(new GDriveSource(Credential)
-                        {
-                            SheetId = file.Id,
-                        });
+                        GDriveSource.ObjectStorage.StoreAsync<string>("sheetId", file.Id);
+                        _data.Source!.SheetId = file.Id;
+                        OnConnected(_data.Source);
                         Frame.GoBack();
                     }
                 }
@@ -418,8 +395,8 @@ namespace MatesovaPrace
 
         public void Logout_Click(object sender, RoutedEventArgs e)
         {
-            objectStorage.DeleteAsync<TokenResponse>("user");
-            Credential = null;
+            GDriveSource.ObjectStorage.DeleteAsync<TokenResponse>("user");
+            _data.Source.Credential = null;
             OnConnected?.Invoke(null);
         }
 

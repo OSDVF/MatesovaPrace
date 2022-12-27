@@ -1,5 +1,6 @@
 ﻿using Google.Apis.Json;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,8 +52,16 @@ namespace Google.Apis.Util.Store
             }
 
             var serialized = NewtonsoftJsonSerializer.Instance.Serialize(value);
-            using var stream = await ApplicationData.Current.LocalFolder.OpenStreamForWriteAsync(GenerateStoredKey(key, typeof(T)), CreationCollisionOption.ReplaceExisting);
-            await stream.WriteAsync(Encoding.Unicode.GetBytes(serialized));
+            var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, GenerateStoredKey(key, typeof(T)));
+            try
+            {
+                using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+                await stream.WriteAsync(Encoding.Unicode.GetBytes(serialized));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Could not write to file {path}.", ex);
+            }
         }
 
         /// <summary>
