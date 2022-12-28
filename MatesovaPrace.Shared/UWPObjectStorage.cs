@@ -27,6 +27,8 @@ namespace Google.Apis.Util.Store
         public UWPObjectStorage()
         {
             folderPath = ApplicationData.Current.LocalFolder.Path;
+            Debug.Write("APP DATA: ");
+            Debug.WriteLine(folderPath);
         }
 
         /// <summary>

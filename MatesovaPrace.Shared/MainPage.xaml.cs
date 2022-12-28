@@ -1,8 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Util.Store;
+
 using MatesovaPrace.Models;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,6 +14,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,9 +24,11 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
+
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Networking.Connectivity;
+using Windows.Security.Cryptography.Core;
 using Windows.UI.Core;
 #if __WASM__
 using Uno.Foundation;
@@ -67,10 +73,61 @@ namespace MatesovaPrace
                 if (sheetId != null)
                 {
                     var TokenResponse = await GDriveSource.ObjectStorage.GetAsync<TokenResponse>("user");
-                    OnLoggedIn(new GDriveSource(new UserCredential(GDriveSource.GetFlow(), "user", TokenResponse))
+                    var newSource = new GDriveSource(new UserCredential(GDriveSource.GetFlow(), "user", TokenResponse))
                     {
                         SheetId = sheetId
-                    });
+                    };
+                    bool changes = false;
+                    List<int> indexes = new List<int>();
+                    var i = 0;
+                    foreach (var person in model.CachedPeople)
+                    {
+                        if (person.Dirty)
+                        {
+                            changes = true;
+                            if(person.SignatureOrCached != null)
+                            {
+                                indexes.Add(i);
+                            }
+                        }
+                        i++;
+                    }
+                    if (changes)
+                    {
+                        var result = await new ContentDialog
+                        {
+                            Title = "There are saved changes",
+                            Content = "Upload your saved version and overwrite online data? Or use the online version and throw away your version?",
+                            PrimaryButtonText = "Upload",
+                            SecondaryButtonText = "Ignore local changes",
+                            XamlRoot = XamlRoot
+                        }.ShowAsync();
+                        if (result == ContentDialogResult.Primary)
+                        {
+                            try
+                            {
+                                newSource.Upload(model.CachedPeople, indexes);
+                                model.Offline = false;
+                            }
+                            catch(Exception ex)
+                            {
+                                model.Offline = true;
+                                Debug.WriteLine(ex);
+                            }
+
+                            model.People = model.CachedPeople;
+                            model.DataSource = newSource;
+
+                        }
+                        else
+                        {
+                            OnLoggedIn(newSource);
+                        }
+                    }
+                    else
+                    {
+                        OnLoggedIn(newSource);
+                    }
 #if !ANDROID
                     Debug.WriteLine("Loaded state from storage");
 #endif
@@ -238,6 +295,7 @@ namespace MatesovaPrace
                     changedItems.AddLast(model.People.IndexOf(person));
                     if (model.AutoSave)
                     {
+                        await person.GetSignaturePNG;
                         Upload();
                     }
                 }
@@ -271,6 +329,7 @@ namespace MatesovaPrace
                 {
                     Title = "Not connected",
                     Content = "Connect to a Google Sheet first",
+                    CloseButtonText = "Close",
                     XamlRoot = XamlRoot
                 }.ShowAsync();
             });
@@ -287,6 +346,7 @@ namespace MatesovaPrace
             }
             try
             {
+                await model.DataSource.PutIntoCacheAsync(model.People, "people");
                 await model.DataSource!.Upload(model.People, changedItems);
                 foreach (var i in changedItems)
                 {
@@ -301,6 +361,16 @@ namespace MatesovaPrace
                 model.Offline = true;
             }
             model.Uploading = false;
+        }
+
+        private void Save_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var i in changedItems)
+            {
+                model.People[i].Dirty = false;
+            }
+            model.DataSource.PutIntoCacheAsync(model.People, "people");
+            changedItems.Clear();
         }
     }
 }

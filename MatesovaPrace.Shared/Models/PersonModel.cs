@@ -11,6 +11,11 @@ using System.Diagnostics;
 using Windows.Graphics.Display;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using Windows.Storage;
+using Windows.Foundation;
+using Microsoft.UI.Dispatching;
+using System.Threading;
+using Microsoft.UI.Xaml.Media;
 
 namespace MatesovaPrace.Models
 {
@@ -109,17 +114,63 @@ namespace MatesovaPrace.Models
         public string? InternalNote { get; set; }
         public DateTime SignupDate { get; set; }
         public float ExtraItemsPrice { get; set; }
+        [JsonIgnore]
         public RenderTargetBitmap? Signature
         {
             get => signature; set
             {
-                if(signature != value)
+                if (signature != value)
                 {
                     signature = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Signature)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SignatureOrCached)));
                 }
             }
         }
+
+        public ImageSource? SignatureOrCached
+        {
+            get
+            {
+                if (signature != null || serializableImage == null)
+                {
+                    return signature;
+                }
+                else
+                {
+                    var cachedPixels = Convert.FromBase64String(serializableImage);
+                    var stream = new MemoryStream(cachedPixels);
+                    var decoder = BitmapDecoder.CreateAsync(BitmapDecoder.PngDecoderId, stream.AsRandomAccessStream()).AsTask().Result;
+                    var rtb = new RenderTargetBitmap();
+                    Image ofscreenImage = new Image();
+                    SoftwareBitmapSource source = new();
+                    var bmp = decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied).AsTask().Result;
+                    source.SetBitmapAsync(bmp);
+                    return source;
+                }
+            }
+        }
+        public static byte[] ReadFully(Stream input)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                return ms.ToArray();
+            }
+        }
+        string serializableImage;
+        public string SerializableImage
+        {
+            get
+            {
+                return serializableImage;
+            }
+            set
+            {
+                serializableImage = value;
+            }
+        }
+
         [JsonIgnore]
         public RelayCommand<Grid> AcceptSignatureCommand { get; set; }
         [JsonIgnore]
@@ -157,6 +208,22 @@ namespace MatesovaPrace.Models
             try
             {
                 await Signature.RenderAsync(renderedGrid, (int)renderedGrid.ActualWidth, (int)renderedGrid.ActualHeight);
+
+                var pixelBufferTask = Signature.GetPixelsAsync();
+                uint w = (uint)Signature.PixelWidth;
+                uint h = (uint)Signature.PixelHeight;
+                GetSignaturePNG = Task.Run(async () =>
+                {
+                    var pixelBuffer = await pixelBufferTask;
+                    var encoded = new InMemoryRandomAccessStream();
+                    var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, encoded);
+                    encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, w, h, 96, 96, pixelBuffer.ToArray());
+                    await encoder.FlushAsync();
+                    encoded.Seek(0);
+                    serializableImage = Convert.ToBase64String(ReadFully(encoded.AsStream()));
+                    encoded.Seek(0);
+                    return encoded.AsStream();
+                });
             }
             catch (Exception ex)
             {
@@ -169,31 +236,7 @@ namespace MatesovaPrace.Models
             Signature = null;
         }
 
-        public async Task<InMemoryRandomAccessStream> GetSignaturePNG()
-        {
-            try
-            {
-                var pixelBuffer = await Signature.GetPixelsAsync();
-                var encoded = new InMemoryRandomAccessStream();
-                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, encoded);
-                encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, (uint)Signature.PixelWidth, (uint)Signature.PixelHeight, 96, 96, pixelBuffer.ToArray());
-                await encoder.FlushAsync();
-                encoded.Seek(0);
-#if false
-                var path = Path.GetTempFileName();
-                using var str = new FileStream(path, FileMode.Create);
-                encoded.AsStream().CopyTo(str);
-                encoded.Seek(0);
-                Debug.WriteLine(path);
-#endif
-                return encoded;
-            }
-
-            catch (Exception ex)
-            {
-                Debug.Write(ex);
-            }
-            return null;
-        }
+        [JsonIgnore]
+        public Task<Stream> GetSignaturePNG { get; private set; }
     }
 }

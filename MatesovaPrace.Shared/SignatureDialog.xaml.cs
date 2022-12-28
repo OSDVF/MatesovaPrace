@@ -11,14 +11,16 @@ using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI;
 using System.Diagnostics;
 using MatesovaPrace.Models;
+#if ANDROID
 using Android.Views;
+#endif
 
 //https://www.charlespetzold.com/blog/2012/11/The-Lesson-of-GetIntermediatePoints.html
 namespace MatesovaPrace
 {
     public sealed partial class SignatureDialog : ContentDialog
     {
-        Polyline currentPoints;
+        Polyline? currentPoints;
         PersonModel _model;
         public SignatureDialog()
         {
@@ -49,16 +51,18 @@ namespace MatesovaPrace
             try
             {
                 // Get information from event arguments
-                uint id = e.Pointer.PointerId;
-
-
-                foreach (PointerPoint pointerPoint in e.GetIntermediatePoints(SignCanvas).Reverse())
+                if(currentPoints != null)
                 {
-                    var point = pointerPoint.Position;
-                    if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
+                    uint id = e.Pointer.PointerId;
+
+                    foreach (PointerPoint pointerPoint in e.GetIntermediatePoints(SignCanvas).Reverse())
                     {
-                        currentPoints.Points.Add(point);
-                        e.Handled = true;
+                        var point = pointerPoint.Position;
+                        if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
+                        {
+                            currentPoints.Points.Add(point);
+                            e.Handled = true;
+                        }
                     }
                 }
             }
@@ -138,12 +142,13 @@ namespace MatesovaPrace
             }
         }
 
+#if ANDROID
         public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
             var canvasPos = SignCanvas.TransformToVisual(this).TransformPoint(new Point(0, 0));
             var dpi = Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.Density;
             var point = new Point(ev.GetX() / dpi, ev.GetY() / dpi) - canvasPos;
-            if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
+            if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight && currentPoints != null)
             {
                 switch (ev.ActionMasked)
                 {
@@ -157,5 +162,6 @@ namespace MatesovaPrace
             }
             return base.OnInterceptTouchEvent(ev);
         }
+#endif
     }
 }

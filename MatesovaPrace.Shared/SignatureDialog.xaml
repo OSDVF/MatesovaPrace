@@ -27,12 +27,12 @@
         <StackPanel>
             <skia:Border BorderBrush="Black" BorderThickness="1">
                 <Grid x:Name="SignCanvas" MinHeight="100" MinWidth="300">
-                    <Image Source="{Binding Signature}" Stretch="None" />
+                    <Image Source="{Binding SignatureOrCached}" Stretch="None" />
                 </Grid>
             </skia:Border>
             <not_skia:Border BorderBrush="Black" BorderThickness="0.5">
                 <Grid x:Name="SignCanvas" MinHeight="100" MinWidth="300">
-                    <Image Source="{Binding Signature}" Stretch="None" />
+                    <Image Source="{Binding SignatureOrCached}" Stretch="None" />
                 </Grid>
             </not_skia:Border>
             <Expander IsExpanded="False" Header="User Details">

@@ -168,8 +168,17 @@ namespace MatesovaPrace
                 var person = people[i];
                 string imageUrl;
 
-                var randStream = await person.GetSignaturePNG();
-                HttpContent fileStreamContent = new StreamContent(randStream.AsStream());
+                Stream randStream;
+                if(person.GetSignaturePNG != null)
+                {
+                    randStream = await person.GetSignaturePNG;
+                }
+                else
+                {
+                    var cachedPixels = Convert.FromBase64String(person.SerializableImage);
+                    randStream = new MemoryStream(cachedPixels);
+                }
+                HttpContent fileStreamContent = new StreamContent(randStream);
                 using (var client = new HttpClient())
                 using (var formData = new MultipartFormDataContent())
                 {

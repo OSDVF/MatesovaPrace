@@ -18,19 +18,19 @@
     <Compile Include="$(MSBuildThisFileDirectory)App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)SignatureDialog.xaml.cs" >
-	  <DependentUpon>SignatureDialog.xaml</DependentUpon>
-	</Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)FileDetailView.xaml.cs" >
-	  <DependentUpon>FileDetailView.xaml</DependentUpon>
-	</Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)SignatureDialog.xaml.cs">
+      <DependentUpon>SignatureDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)FileDetailView.xaml.cs">
+      <DependentUpon>FileDetailView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)GDriveSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\BooleanToVisibility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\ByteArrayToImageSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\Entry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)LoginPage.xaml.cs" >
+    <Compile Include="$(MSBuildThisFileDirectory)LoginPage.xaml.cs">
       <DependentUpon>LoginPage.xaml</DependentUpon>
-	</Compile>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -45,8 +45,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\CompactPhoneNumber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\StringListConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UserCircle.xaml.cs">
-		<DependentUpon>UserCircle.xaml</DependentUpon>
-	</Compile>
+      <DependentUpon>UserCircle.xaml</DependentUpon>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)UWPObjectStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>

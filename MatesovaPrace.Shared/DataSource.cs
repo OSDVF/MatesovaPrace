@@ -1,4 +1,6 @@
-﻿using MatesovaPrace.Models;
+﻿using Google.Apis.Util.Store;
+
+using MatesovaPrace.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,13 +13,15 @@ namespace MatesovaPrace
     interface IDataSource
     {
         public abstract Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true);
-        public abstract Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> index);
+        public abstract Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> indexes);
         public abstract Task PutIntoCacheAsync<T>(T obj, string key);
     }
 
     class DummyDataSource : IDataSource
     {
         readonly Action prompOnUse;
+        public static UWPObjectStorage ObjectStorage = new();
+
         public DummyDataSource(Action prompOnUse)
         {
             this.prompOnUse = prompOnUse;
@@ -29,13 +33,14 @@ namespace MatesovaPrace
             throw new Exception("Not connected to any data source");
         }
 
-        public Task PutIntoCacheAsync<T>(T obj, string key)
+        public async Task PutIntoCacheAsync<T>(T obj, string key)
         {
+            await ObjectStorage.StoreAsync(key, obj);
             prompOnUse();
             throw new Exception("Not connected to any data source");
         }
 
-        public Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> index)
+        public Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> indexes)
         {
             prompOnUse();
             throw new Exception("Not connected to any data source");

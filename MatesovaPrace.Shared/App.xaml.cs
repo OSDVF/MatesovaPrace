@@ -3,7 +3,9 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+
 using System;
+
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.ViewManagement;
@@ -30,7 +32,7 @@ namespace MatesovaPrace
             InitializeLogging();
 
 #if __IOS__ || __ANDROID__
-                Uno.UI.FeatureConfiguration.Style.ConfigureNativeFrameNavigation();
+            Uno.UI.FeatureConfiguration.Style.ConfigureNativeFrameNavigation();
 #endif
 
             this.InitializeComponent();
