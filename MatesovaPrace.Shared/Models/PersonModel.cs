@@ -111,6 +111,30 @@ namespace MatesovaPrace.Models
 
         public float NightPrice { get; set; }
         public float TotalPrice { get; set; }
+        public string? Paid
+        {
+            get => paid; set
+            {
+                if(paid != value)
+                {
+                    paid = value;
+                    Dirty = true;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Paid)));
+                }
+            }
+        }
+        public string PaidInPlace
+        {
+            get => paidInPlace; set
+            {
+                if(paidInPlace != value)
+                {
+                    paidInPlace = value;
+                    Dirty = true;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PaidInPlace)));
+                }
+            }
+        }
         public string? InternalNote { get; set; }
         public DateTime SignupDate { get; set; }
         public float ExtraItemsPrice { get; set; }
@@ -159,6 +183,9 @@ namespace MatesovaPrace.Models
             }
         }
         string serializableImage;
+        private string paidInPlace;
+        private string? paid;
+
         public string SerializableImage
         {
             get

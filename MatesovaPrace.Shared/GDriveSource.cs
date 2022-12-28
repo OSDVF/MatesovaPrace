@@ -78,8 +78,8 @@ namespace MatesovaPrace
         public async Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true)
         {
             ObservableCollection<PersonModel> people = new();
-            var result = await Service.Spreadsheets.Values.Get(SheetId, "A2:Z60").ExecuteAsync();
-            var imagesNotesRequest = Service.Spreadsheets.Values.Get(SheetId, "accommodation!L3:M53");
+            var result = await Service.Spreadsheets.Values.Get(SheetId, "A2:AA60").ExecuteAsync();
+            var imagesNotesRequest = Service.Spreadsheets.Values.Get(SheetId, "accommodation!J3:M53");
             imagesNotesRequest.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.FORMULA;
             var imagesNotesResult = await imagesNotesRequest.ExecuteAsync();
             int index = 0;
@@ -104,7 +104,7 @@ namespace MatesovaPrace
                                             row[5] as string,
                                             row[6] as string,
                                         row[7] as string,
-                                        row[8] == "ano",
+                                        row[8] as string == "ano",
                                         row[9] as string,
                                             row[10] as string,
                                             row[11] as string,
@@ -123,12 +123,12 @@ namespace MatesovaPrace
                                     row.Count > 25 ? float.Parse((string)row[25]) : 0
                                         );
                     bool isInt = int.TryParse(row[0] as string, out int indexInSignPage);
-                    if (isInt && imagesNotesResult.Values.Count > indexInSignPage -1)
+                    if (imagesNotesResult.Values != null && isInt && imagesNotesResult.Values.Count > indexInSignPage - 1)
                     {
                         var inVal = imagesNotesResult.Values[indexInSignPage - 1];
-                        if (inVal.Count > 1)
+                        if (inVal.Count > 3)
                         {
-                            var imageF = (inVal[1] as string);
+                            var imageF = (inVal[3] as string);
                             var imagePath = imageF.Substring(8, imageF.Length - 10);
 
                             try
@@ -143,12 +143,25 @@ namespace MatesovaPrace
                             }
                         }
 
+                        if (inVal.Count > 2)
+                        {
+                            newPerson.MatesNote = inVal[2] as string;
+                        }
+
                         if (inVal.Count > 0)
                         {
-                            newPerson.MatesNote = inVal[0] as string;
+                            newPerson.Paid = inVal[0].ToString();
+                        }
+                        if (inVal.Count > 1)
+                        {
+                            newPerson.PaidInPlace = inVal[1].ToString();
                         }
                     }
-
+                    if (row.Count > 26 && string.IsNullOrEmpty(newPerson.Paid))
+                    {
+                        newPerson.Paid = row[26] as string;
+                    }
+                    newPerson.Dirty = false;
                     people.Add(newPerson);
                 }
                 catch (Exception e)
@@ -202,30 +215,27 @@ namespace MatesovaPrace
             foreach (var i in indexes)
             {
                 var person = people[i];
-                string imageUrl;
+                string imageUrl = string.Empty;
+                if (person.SerializableImage != null)
+                {
 
-                Stream randStream;
-                if (person.GetSignaturePNG != null)
-                {
-                    randStream = await person.GetSignaturePNG;
-                }
-                else
-                {
+                    Stream randStream;
                     var cachedPixels = Convert.FromBase64String(person.SerializableImage);
                     randStream = new MemoryStream(cachedPixels);
-                }
-                HttpContent fileStreamContent = new StreamContent(randStream);
-                using (var client = new HttpClient())
-                using (var formData = new MultipartFormDataContent())
-                {
-                    formData.Add(fileStreamContent, "fileToUpload", SheetId + '-' + person.Email +
-                        Regex.Replace(person.Name, @"[^\u0000-\u007F]+", string.Empty) + ".png");
-                    var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
-                    if (!response.IsSuccessStatusCode)
+
+                    HttpContent fileStreamContent = new StreamContent(randStream);
+                    using (var client = new HttpClient())
+                    using (var formData = new MultipartFormDataContent())
                     {
-                        return;
+                        formData.Add(fileStreamContent, "fileToUpload", SheetId + '-' + person.Email +
+                            Regex.Replace(person.Name, @"[^\u0000-\u007F]+", string.Empty) + ".png");
+                        var response = await client.PostAsync("https://prihlasky.travna.cz/server/www/upload.php", formData);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            return;
+                        }
+                        imageUrl = await response.Content.ReadAsStringAsync();
                     }
-                    imageUrl = await response.Content.ReadAsStringAsync();
                 }
 
                 updateRanges.Add(new ValueRange
@@ -240,10 +250,10 @@ namespace MatesovaPrace
                             person.DepartureString,
                             (person.Departure - person.Arrival).Days,
                             person.TotalPrice,
-                            0,
-                            0,
+                            person.Paid,
+                            person.PaidInPlace,
                             person.MatesNote,
-                            "=IMAGE(\""+imageUrl+"\")"
+                            imageUrl == string.Empty ? "" : "=IMAGE(\""+imageUrl+"\")"
                         }
                     }
                 });

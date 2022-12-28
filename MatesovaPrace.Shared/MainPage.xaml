@@ -58,6 +58,9 @@
                                    ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
                                    Width="{Binding DataContext.ColumnWidths[9], ElementName=MainPageElement}"/>
                     <TextBlock Text="{Binding TotalPrice}" Width="{Binding DataContext.ColumnWidths[10], ElementName=MainPageElement}"/>
+                    
+                    <TextBox PlaceholderText="Paid online" Text="{Binding Paid, Mode=TwoWay}" />
+                    <TextBox PlaceholderText="Personally" Text="{Binding PaidInPlace, Mode=TwoWay}" />
                     <TextBox PlaceholderText="Note" Text="{Binding MatesNote, Mode=TwoWay}" />
                     <Button Visibility="{Binding Dirty, Converter={StaticResource BooleanToVisibilityConverter}}" Click="Save_Click">
                         <SymbolIcon Symbol="Save" />
@@ -98,7 +101,7 @@
                   ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.IsHorizontalRailEnabled="True" 
                   ItemTemplate="{StaticResource ListTempl}" />
         <android:ScrollViewer Grid.Row="1" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto" Visibility="{Binding DataSource, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <ListView MaxWidth="1200" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click"
+            <ListView MaxWidth="1600" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click"
                   ItemTemplate="{StaticResource ListTempl}" />
         </android:ScrollViewer>
 

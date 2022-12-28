@@ -366,12 +366,12 @@ namespace MatesovaPrace
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var i in changedItems)
-            {
-                model.People[i].Dirty = false;
-            }
+            /*var person = (sender as Button).DataContext as PersonModel;
             model.DataSource.PutIntoCacheAsync(model.People, "people");
-            changedItems.Clear();
+            person.Dirty = false;*/
+
+            changedItems.AddLast(model.People.IndexOf((sender as Button).DataContext as PersonModel));
+            Upload();
         }
     }
 }
