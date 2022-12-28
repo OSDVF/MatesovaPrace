@@ -7,7 +7,9 @@ using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Util.Store;
+
 using MatesovaPrace.Models;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,6 +22,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Windows.Devices.Geolocation;
 
 namespace MatesovaPrace
@@ -76,7 +79,11 @@ namespace MatesovaPrace
         {
             ObservableCollection<PersonModel> people = new();
             var result = await Service.Spreadsheets.Values.Get(SheetId, "A2:Z60").ExecuteAsync();
+            var imagesNotesRequest = Service.Spreadsheets.Values.Get(SheetId, "accommodation!L3:M53");
+            imagesNotesRequest.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.FORMULA;
+            var imagesNotesResult = await imagesNotesRequest.ExecuteAsync();
             int index = 0;
+            HttpClient cl = new HttpClient();
             foreach (var row in result.Values)
             {
                 if (excludeUnlogged && row[0] as string == "Z")
@@ -86,38 +93,64 @@ namespace MatesovaPrace
                 var additionalItems = (row[19] as string)?.Split(",", StringSplitOptions.TrimEntries);
                 Status status;
                 var statusKnown = Enum.TryParse<Status>(row[20] as string, out status);
+                var inVal = imagesNotesResult.Values[int.Parse(row[0] as string) - 1];
                 try
                 {
-                    people.Add(new PersonModel(
-                       row[0] as string,
-                        row[1] as string,
-                      row[2] as string,
-                    uint.Parse(row[3] as string),
-                        row[4] as string,
-                        row[5] as string,
-                        row[6] as string,
-                    row[7] as string,
-                    row[8] == "ano",
-                    row[9] as string,
-                        row[10] as string,
-                        row[11] as string,
-                        row[12] as string,
-                        row[14] as string,
-                        DateTime.Parse(row[15] as string),
-                    Enum.Parse(typeof(Meal), row[16] as string, true) as Meal? ?? Meal.Unknown,
-                        DateTime.Parse(row[17] as string),
-                    Enum.Parse(typeof(Meal), row[18] as string, true) as Meal? ?? Meal.Unknown,
-                            additionalItems,
-                    statusKnown ? status : Status.Unknown,
-                    float.Parse(row[21] as string),
-                    float.Parse(row[22] as string),
-                    row[23] as string,
-                    DateTime.Parse(row[24] as string),
-                row.Count > 25 ? float.Parse((string)row[25]) : 0
-                    ));
+                    PersonModel newPerson = new PersonModel(
+                                           row[0] as string,
+                                            row[1] as string,
+                                          row[2] as string,
+                                        uint.Parse(row[3] as string),
+                                            row[4] as string,
+                                            row[5] as string,
+                                            row[6] as string,
+                                        row[7] as string,
+                                        row[8] == "ano",
+                                        row[9] as string,
+                                            row[10] as string,
+                                            row[11] as string,
+                                            row[12] as string,
+                                            row[14] as string,
+                                            DateTime.Parse(row[15] as string),
+                                        Enum.Parse(typeof(Meal), row[16] as string, true) as Meal? ?? Meal.Unknown,
+                                            DateTime.Parse(row[17] as string),
+                                        Enum.Parse(typeof(Meal), row[18] as string, true) as Meal? ?? Meal.Unknown,
+                                                additionalItems,
+                                        statusKnown ? status : Status.Unknown,
+                                        float.Parse(row[21] as string),
+                                        float.Parse(row[22] as string),
+                                        row[23] as string,
+                                        DateTime.Parse(row[24] as string),
+                                    row.Count > 25 ? float.Parse((string)row[25]) : 0
+                                        );
+
+                    if (inVal.Count > 1)
+                    {
+                        var imageF = (inVal[1] as string);
+                        var imagePath = imageF.Substring(8, imageF.Length - 10);
+
+                        try
+                        {
+                            var imageBytes = await cl.GetByteArrayAsync(imagePath);
+                        }
+                        catch(Exception ex)
+                        {
+                            Debug.WriteLine(ex);
+                            throw new Exception($"Could not fetch image for person {index}.", ex);
+                        }
+                        newPerson.SerializableImage = Convert.ToBase64String(imageBytes);
+                    }
+
+                    if (inVal.Count > 0)
+                    {
+                        newPerson.MatesNote = inVal[0] as string;
+                    }
+
+                    people.Add(newPerson);
                 }
                 catch (Exception e)
                 {
+                    Debug.WriteLine(e);
                     throw new Exception($"An error occured while adding person with index {index}.", e);
                 }
                 index++;
@@ -169,7 +202,7 @@ namespace MatesovaPrace
                 string imageUrl;
 
                 Stream randStream;
-                if(person.GetSignaturePNG != null)
+                if (person.GetSignaturePNG != null)
                 {
                     randStream = await person.GetSignaturePNG;
                 }
