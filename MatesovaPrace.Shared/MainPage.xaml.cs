@@ -260,6 +260,7 @@ namespace MatesovaPrace
             }
             catch (Exception e)
             {
+                System.Diagnostics.Debug.WriteLine(e);
                 await new ContentDialog
                 {
                     Title = "Error Getting Accommodation Data",

@@ -93,7 +93,6 @@ namespace MatesovaPrace
                 var additionalItems = (row[19] as string)?.Split(",", StringSplitOptions.TrimEntries);
                 Status status;
                 var statusKnown = Enum.TryParse<Status>(row[20] as string, out status);
-                var inVal = imagesNotesResult.Values[int.Parse(row[0] as string) - 1];
                 try
                 {
                     PersonModel newPerson = new PersonModel(
@@ -123,27 +122,31 @@ namespace MatesovaPrace
                                         DateTime.Parse(row[24] as string),
                                     row.Count > 25 ? float.Parse((string)row[25]) : 0
                                         );
-
-                    if (inVal.Count > 1)
+                    bool isInt = int.TryParse(row[0] as string, out int indexInSignPage);
+                    if (isInt && imagesNotesResult.Values.Count > indexInSignPage -1)
                     {
-                        var imageF = (inVal[1] as string);
-                        var imagePath = imageF.Substring(8, imageF.Length - 10);
-
-                        try
+                        var inVal = imagesNotesResult.Values[indexInSignPage - 1];
+                        if (inVal.Count > 1)
                         {
-                            var imageBytes = await cl.GetByteArrayAsync(imagePath);
-                        }
-                        catch(Exception ex)
-                        {
-                            Debug.WriteLine(ex);
-                            throw new Exception($"Could not fetch image for person {index}.", ex);
-                        }
-                        newPerson.SerializableImage = Convert.ToBase64String(imageBytes);
-                    }
+                            var imageF = (inVal[1] as string);
+                            var imagePath = imageF.Substring(8, imageF.Length - 10);
 
-                    if (inVal.Count > 0)
-                    {
-                        newPerson.MatesNote = inVal[0] as string;
+                            try
+                            {
+                                var imageBytes = await cl.GetByteArrayAsync(imagePath);
+                                newPerson.SerializableImage = Convert.ToBase64String(imageBytes);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex);
+                                throw new Exception($"Could not fetch image for person {index}.", ex);
+                            }
+                        }
+
+                        if (inVal.Count > 0)
+                        {
+                            newPerson.MatesNote = inVal[0] as string;
+                        }
                     }
 
                     people.Add(newPerson);
