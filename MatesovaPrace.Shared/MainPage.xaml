@@ -7,6 +7,7 @@
     xmlns:models="using:MatesovaPrace.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:win="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance Type=models:AccommodationPageModel, IsDesignTimeCreatable=True}"
     Loaded="Load"
@@ -21,11 +22,11 @@
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
+                <win:ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <local:UserCircle Grid.Column="0" Margin="5,0,0,0" Credential="{Binding DataSource.Credential, Mode=TwoWay}" />
-            <CommandBar Grid.Column="1" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
+            <CommandBar Grid.Column="1" win:HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
                 <AppBarButton Label="Upload" Visibility="{Binding AutoSave, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='Reverse'}" Command="{x:Bind UploadCommand}" />
                 <AppBarElementContainer>
                     <TextBlock Text="{Binding TitleText}" FontSize="18" Margin="10,10,0,0" />
@@ -42,10 +43,11 @@
                     <AppBarButton Label="Select Different Sheet" Click="ShowLoginPage_Click" />
                 </CommandBar.SecondaryCommands>
             </CommandBar>
-            <Rectangle Grid.Column="2" x:Name="MainAppBar" />
+            <win:Rectangle Grid.Column="2" x:Name="MainAppBar" />
         </Grid>
         <!--Grid of accommodated people-->
-        <ListView Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click">
+        <ListView Grid.Row="1" ItemsSource="{Binding People}" IsItemClickEnabled="True" ItemClick="ListView_Click"
+                  ScrollViewer.HorizontalScrollMode="Enabled" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.IsHorizontalRailEnabled="True">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">

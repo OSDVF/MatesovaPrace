@@ -7,9 +7,9 @@
     xmlns:models="using:MatesovaPrace.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:skia="http://uno.ui/skia"
-    xmlns:not_skia="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    mc:Ignorable="d skia"
+    xmlns:win="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:not_win="http://uno.ui/not_win"
+    mc:Ignorable="d not_win"
     MinWidth="30"
     d:DataContext="{d:DesignInstance Type=models:UserCircleModel, IsDesignTimeCreatable=True}"
     d:DesignHeight="300"
@@ -24,10 +24,10 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Ellipse Fill="{Binding Model.CircleFill, ElementName=UserCirleElement}"
-                 not_skia:Width="{Binding ActualWidth, ElementName=UserCirleElement}"
-                 not_skia:Height="{Binding ActualWidth, ElementName=UserCirleElement}"
-                 skia:Width="30"
-                 skia:Height="30"
+                 win:Width="{Binding ActualWidth, ElementName=UserCirleElement}"
+                 win:Height="{Binding ActualWidth, ElementName=UserCirleElement}"
+                 not_win:Width="30"
+                 not_win:Height="30"
                  PointerExited="PointerExitedCircle"
                  PointerEntered="PointerEnteredCircle" />
         <SymbolIcon

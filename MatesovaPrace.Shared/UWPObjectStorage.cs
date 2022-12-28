@@ -22,16 +22,8 @@ namespace Google.Apis.Util.Store
         public string FolderPath { get { return folderPath; } }
 
         /// <summary>
-        /// Constructs a new file data store. If <c>fullPath</c> is <c>false</c> the path will be used as relative to 
-        /// <c>Environment.SpecialFolder.ApplicationData"</c> on Windows, or <c>$HOME</c> on Linux and MacOS,
-        /// otherwise the input folder will be treated as absolute.
-        /// The folder is created if it doesn't exist yet.
+        /// Constructs a new file data store in <c>Environment.SpecialFolder.ApplicationData"</c> on Windows, or <c>$HOME</c> on Linux and MacOS
         /// </summary>
-        /// <param name="folder">Folder path.</param>
-        /// <param name="fullPath">
-        /// Defines whether the folder parameter is absolute or relative to
-        /// <c>Environment.SpecialFolder.ApplicationData</c> on Windows, or<c>$HOME</c> on Linux and MacOS.
-        /// </param>
         public UWPObjectStorage()
         {
             folderPath = ApplicationData.Current.LocalFolder.Path;
@@ -109,6 +101,7 @@ namespace Google.Apis.Util.Store
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine(ex);
                     throw;
                 }
             }

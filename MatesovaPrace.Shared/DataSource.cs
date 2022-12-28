@@ -23,19 +23,19 @@ namespace MatesovaPrace
             this.prompOnUse = prompOnUse;
         }
 
-        public async Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true)
+        public Task<ObservableCollection<PersonModel>> GetPeopleAsync(bool excludeUnlogged = true)
         {
             prompOnUse();
             throw new Exception("Not connected to any data source");
         }
 
-        public async Task PutIntoCacheAsync<T>(T obj, string key)
+        public Task PutIntoCacheAsync<T>(T obj, string key)
         {
             prompOnUse();
             throw new Exception("Not connected to any data source");
         }
 
-        public async Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> index)
+        public Task Upload(IReadOnlyList<PersonModel> people, IEnumerable<int> index)
         {
             prompOnUse();
             throw new Exception("Not connected to any data source");

@@ -44,8 +44,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\StringFormatConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\CompactPhoneNumber.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIUtils\StringListConverter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)UserCircle.xaml.cs" />
-    <Compile Include="..\MatesovaPrace.Shared\UWPObjectStorage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UserCircle.xaml.cs">
+		<DependentUpon>UserCircle.xaml</DependentUpon>
+	</Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)UWPObjectStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)XPlatformCodeReceiver.cs" />
   </ItemGroup>
   <ItemGroup>

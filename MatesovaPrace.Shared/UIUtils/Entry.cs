@@ -4,7 +4,7 @@ using System;
 
 namespace MatesovaPrace
 {
-    public class Entry : TextBox
+    public partial class Entry : TextBox
     {
         public event EventHandler<KeyRoutedEventArgs>? Confirmed;
         public Entry() : base()

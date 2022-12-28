@@ -11,13 +11,14 @@ using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI;
 using System.Diagnostics;
 using MatesovaPrace.Models;
+using Android.Views;
 
 //https://www.charlespetzold.com/blog/2012/11/The-Lesson-of-GetIntermediatePoints.html
 namespace MatesovaPrace
 {
     public sealed partial class SignatureDialog : ContentDialog
     {
-        Dictionary<uint, Polyline> pointerDictionary = new Dictionary<uint, Polyline>();
+        Polyline currentPoints;
         PersonModel _model;
         public SignatureDialog()
         {
@@ -29,9 +30,9 @@ namespace MatesovaPrace
 
         private void SignatureDialog_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            foreach(var child in SignCanvas.Children)
+            foreach (var child in SignCanvas.Children)
             {
-                if(child is Polyline)
+                if (child is Polyline)
                 {
                     SignCanvas.Children.Remove(child);
                 }
@@ -41,7 +42,7 @@ namespace MatesovaPrace
 
         void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            if(_model.Signature != null)
+            if (_model.Signature != null)
             {
                 return;
             }
@@ -50,22 +51,20 @@ namespace MatesovaPrace
                 // Get information from event arguments
                 uint id = e.Pointer.PointerId;
 
-                // If ID is in dictionary, add the points to the Polyline
-                if (pointerDictionary.ContainsKey(id))
+
+                foreach (PointerPoint pointerPoint in e.GetIntermediatePoints(SignCanvas).Reverse())
                 {
-                    foreach (PointerPoint pointerPoint in e.GetIntermediatePoints(SignCanvas).Reverse())
+                    var point = pointerPoint.Position;
+                    if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
                     {
-                        var point = pointerPoint.Position;
-                        if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
-                        {
-                            pointerDictionary[id].Points.Add(point);
-                        }
+                        currentPoints.Points.Add(point);
+                        e.Handled = true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                System.Diagnostics.Debug.WriteLine(ex);
             }
         }
 
@@ -74,9 +73,9 @@ namespace MatesovaPrace
             if (args.Result == ContentDialogResult.Secondary)//Clear canvas button
             {
                 args.Cancel = true;
-                foreach(var child in SignCanvas.Children)
+                foreach (var child in SignCanvas.Children)
                 {
-                    if(child is Polyline)
+                    if (child is Polyline)
                     {
                         SignCanvas.Children.Remove(child);
                     }
@@ -98,22 +97,22 @@ namespace MatesovaPrace
                 if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
                 {
                     // Create Polyline
-                    Polyline polyline = new Polyline
+                    currentPoints = new()
                     {
                         Stroke = new SolidColorBrush(Colors.Black),
                         StrokeThickness = 2
                     };
-                    polyline.Points.Add(point);
+                    currentPoints.Points.Add(point);
 
                     // Add to Grid and dictionary
-                    SignCanvas.Children.Add(polyline);
-                    pointerDictionary.Add(id, polyline);
+                    SignCanvas.Children.Add(currentPoints);
                     SignCanvas.CapturePointer(e.Pointer);
+                    e.Handled = true;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                System.Diagnostics.Debug.WriteLine(ex);
             }
         }
 
@@ -125,19 +124,38 @@ namespace MatesovaPrace
             }
             try
             {
-                // Get information from event arguments
                 uint id = e.Pointer.PointerId;
-
-                // If ID is in dictionary, remove it
-                if (pointerDictionary.ContainsKey(id))
+                Point point = e.GetCurrentPoint(SignCanvas).Position;
+                if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
                 {
-                    pointerDictionary.Remove(id);
+                    currentPoints = null;
+                    e.Handled = true;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                System.Diagnostics.Debug.WriteLine(ex);
             }
+        }
+
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
+        {
+            var canvasPos = SignCanvas.TransformToVisual(this).TransformPoint(new Point(0, 0));
+            var dpi = Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.Density;
+            var point = new Point(ev.GetX() / dpi, ev.GetY() / dpi) - canvasPos;
+            if (point.X > 0 && point.X < SignCanvas.ActualWidth && point.Y > 0 && point.Y < SignCanvas.ActualHeight)
+            {
+                switch (ev.ActionMasked)
+                {
+                    case MotionEventActions.Move:
+                        currentPoints.Points.Add(point);
+                        break;
+                    case MotionEventActions.Up:
+                        currentPoints = null;
+                        break;
+                }
+            }
+            return base.OnInterceptTouchEvent(ev);
         }
     }
 }

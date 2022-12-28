@@ -7,6 +7,7 @@
     xmlns:models="using:MatesovaPrace.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:win="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance Type=models:LoginModel, IsDesignTimeCreatable=True}"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -17,10 +18,10 @@
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <win:ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <CommandBar Grid.Column="0" HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
+            <CommandBar Grid.Column="0" win:HorizontalAlignment="Left" PointerPressed="CommandBar_PointerPressed">
                 <AppBarButton Icon="Back" Content="Back" Click="Back_Click" />
                 <AppBarElementContainer>
                     <local:UserCircle Margin="5,0,0,0" Credential="{Binding Source.Credential}" />
@@ -33,7 +34,7 @@
                 </CommandBar.SecondaryCommands>
             </CommandBar>
 
-            <Rectangle x:Name="AppBar" Grid.Column="1"/>
+            <win:Rectangle x:Name="AppBar" Grid.Column="1"/>
         </Grid>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1">

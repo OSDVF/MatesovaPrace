@@ -86,7 +86,9 @@ namespace MatesovaPrace
 
         private void SetTitleBar()
         {
+#if WINDOWS
             app?.MainWindow.SetTitleBar(AppBar);
+#endif
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)

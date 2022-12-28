@@ -71,7 +71,9 @@ namespace MatesovaPrace
                     {
                         SheetId = sheetId
                     });
+#if !ANDROID
                     Debug.WriteLine("Loaded state from storage");
+#endif
                 }
             }
             else
@@ -125,7 +127,9 @@ namespace MatesovaPrace
 
         void ResetTitlebar(object sender, SizeChangedEventArgs e)
         {
+#if WINDOWS
             app?.MainWindow.SetTitleBar(MainAppBar);
+#endif
         }
 
         void Load(object sender, RoutedEventArgs e)
@@ -162,7 +166,7 @@ namespace MatesovaPrace
                     break;
                 }
             }
-            if(changes)
+            if (changes)
             {
                 var result = await new ContentDialog
                 {
@@ -172,7 +176,7 @@ namespace MatesovaPrace
                     SecondaryButtonText = "Ignore local changes",
                     XamlRoot = XamlRoot
                 }.ShowAsync();
-                if(result == ContentDialogResult.Primary)
+                if (result == ContentDialogResult.Primary)
                 {
                     Upload();
                     return;
@@ -190,10 +194,11 @@ namespace MatesovaPrace
                 try
                 {
                     await model.DataSource.PutIntoCacheAsync(model.People, "people");
+                    model.Offline = false;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex);
+                    System.Diagnostics.Debug.WriteLine(ex);
                 }
             }
             catch (Exception e)
@@ -205,6 +210,8 @@ namespace MatesovaPrace
                     XamlRoot = XamlRoot,
                     CloseButtonText = "Dismiss"
                 }.ShowAsync();
+                model.DataSource = null;
+                model.Offline = true;
             }
             model.PeopleLoading = false;
         }
@@ -238,7 +245,7 @@ namespace MatesovaPrace
             catch (Exception ex)
             {
                 dialogMutex.Release();
-                Debug.WriteLine(ex);
+                System.Diagnostics.Debug.WriteLine(ex);
             }
 
         }
@@ -272,7 +279,7 @@ namespace MatesovaPrace
         public async void Upload()
         {
             model.Uploading = true;
-            if(model.DataSource == null)
+            if (model.DataSource == null)
             {
                 TryLoadState();
                 model.Uploading = false;
@@ -290,7 +297,7 @@ namespace MatesovaPrace
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex);
+                System.Diagnostics.Debug.WriteLine(ex);
                 model.Offline = true;
             }
             model.Uploading = false;
